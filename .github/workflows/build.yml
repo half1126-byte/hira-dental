@@ -40,7 +40,7 @@ jobs:
       - name: Prepare Pages output (_site)
         run: |
           mkdir -p _site
-          cp -r dental articles clinics index.html style.css article.css robots.txt llms.txt sitemap.xml _site/
+          cp -r dental articles clinics index.html style.css article.css robots.txt llms.txt sitemap.xml 01641d0d88be2025b555e6f89832ade7.txt _site/
 
       - name: Upload GitHub Pages artifact
         uses: actions/upload-pages-artifact@v3
@@ -57,3 +57,18 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+  indexnow:
+    needs: deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: IndexNow 제출 (Bing·네이버 자동 색인 통지)
+        run: node scripts/submit-indexnow.js

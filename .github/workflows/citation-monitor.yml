@@ -1,0 +1,39 @@
+# AI 인용 모니터링 — 매주 월요일 KST 10:00
+# 거래처별 타깃 질의를 AI 검색(Perplexity)에 실제로 던져 인용 여부를 리포트로 커밋.
+# PERPLEXITY_API_KEY Secret이 없으면 수동 점검용 체크리스트만 생성.
+name: AI Citation Monitor
+
+on:
+  schedule:
+    - cron: '0 1 * * 1'   # 매주 월 KST 10:00 (UTC 01:00)
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: 인용 점검 실행
+        env:
+          PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
+        run: node scripts/check-citations.js
+
+      - name: 리포트 커밋
+        run: |
+          git config user.name "citation-bot"
+          git config user.email "actions@github.com"
+          git add reports/
+          if git diff --cached --quiet; then
+            echo "변경 없음"
+          else
+            git commit -m "report: AI 인용 모니터링 $(date -u +%Y-%m-%d)"
+            git pull --rebase origin main
+            git push origin main
+          fi
