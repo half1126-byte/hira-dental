@@ -43,6 +43,19 @@ hira-dental/
 AI 검색(GPT·Gemini·Claude·Perplexity·Grok)에서 인용되는 거래처 프로필을 자동 생성한다.
 자세한 규칙·운영법은 [docs/GEO-PLAYBOOK.md](docs/GEO-PLAYBOOK.md) 참고.
 
+### 원클릭 운영 (GitHub Actions)
+
+**Actions 탭 → "Partner 원클릭 등록·해지" → Run workflow** 폼에서 버튼 하나로 처리:
+
+| 작업 | 입력 | 결과 |
+|------|------|------|
+| `add` | 기관명 + 시도 (id는 자동생성 가능) | HIRA 자동 조사 → active 등록 → 커밋 → 빌드·배포 → `/clinics/<id>/` 노출 |
+| `pause` | id | 계약 해지 — 해지일 기록, 페이지 자동 제거 |
+| `activate` | id | 재활성화 — 페이지 재생성 |
+| `remove` | id | DB 완전 삭제 |
+
+CLI로도 동일 작업 가능:
+
 ```bash
 # 1. 거래처 등록 (HIRA API에서 주소·전화·좌표 자동 조사 → status: paused)
 npm run partner:add -- --name "OO치과의원" --sido 서울 --id gangnam-oo-dental
@@ -51,6 +64,12 @@ npm run partner:add -- --name "OO치과의원" --sido 서울 --id gangnam-oo-den
 
 # 3. 빌드 → /clinics/<id>/ 프로필 생성 + 지역 아티클 65곳 자동 링크 + sitemap 등록
 npm run build
+
+# 계약 해지 / 재활성화 / 삭제 / 목록
+node scripts/set-partner.js --id <slug> --status paused
+node scripts/set-partner.js --id <slug> --status active
+node scripts/set-partner.js --id <slug> --remove
+node scripts/set-partner.js --list
 ```
 
 - 프로필: 답변우선 요약, Dentist·FAQPage JSON-LD, HIRA 신고가 자동 병합, 기계가독 `clinic.json`

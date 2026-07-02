@@ -63,18 +63,42 @@ function findLocalPrices(name) {
 
 async function main() {
   const args = parseArgs(process.argv);
-  if (!args.name || !args.sido || !args.id) {
-    console.error('사용법: node scripts/add-partner.js --name "기관명" --sido 서울 --id url-slug [--sggu 강남구 ...]');
+  if (!args.name || !args.sido) {
+    console.error('사용법: node scripts/add-partner.js --name "기관명" --sido 서울 [--id url-slug] [--sggu 강남구] [--status active]');
     process.exit(1);
+  }
+
+  const db = JSON.parse(readFileSync(PARTNERS_FILE, 'utf8'));
+
+  // 동일 기관 중복 등록 방지
+  const dup = db.partners.find(p => p.name === args.name && p.sido === args.sido);
+  if (dup) {
+    console.error(`✗ 이미 등록된 거래처: ${dup.name} (id: ${dup.id}, status: ${dup.status})`);
+    console.error('  상태 변경은 set-partner.js 를 사용하세요.');
+    process.exit(1);
+  }
+
+  // id 미지정 시 자동 생성 (SEO상 영문 키워드 slug 직접 지정 권장)
+  if (!args.id || args.id === true || args.id === 'auto') {
+    const SIDO_EN = { 서울: 'seoul', 부산: 'busan', 인천: 'incheon', 대구: 'daegu', 광주: 'gwangju', 대전: 'daejeon', 울산: 'ulsan', 경기: 'gyeonggi', 강원: 'gangwon', 충북: 'chungbuk', 충남: 'chungnam', 전북: 'jeonbuk', 전남: 'jeonnam', 경북: 'gyeongbuk', 경남: 'gyeongnam', 제주: 'jeju', 세종: 'sejong' };
+    const base = `${SIDO_EN[args.sido] ?? 'kr'}-dental`;
+    let n = db.partners.length + 1;
+    while (db.partners.some(p => p.id === `${base}-${n}`)) n++;
+    args.id = `${base}-${n}`;
+    console.log(`  ℹ id 자동 생성: ${args.id} (영문 키워드 slug 직접 지정을 권장)`);
   }
   if (!/^[a-z0-9-]+$/.test(args.id)) {
     console.error('✗ --id 는 영문 소문자·숫자·하이픈만 가능합니다.');
     process.exit(1);
   }
-
-  const db = JSON.parse(readFileSync(PARTNERS_FILE, 'utf8'));
   if (db.partners.some(p => p.id === args.id)) {
     console.error(`✗ 이미 존재하는 id: ${args.id}`);
+    process.exit(1);
+  }
+
+  const status = args.status && args.status !== true ? args.status : 'paused';
+  if (!['active', 'paused'].includes(status)) {
+    console.error('✗ --status 는 active 또는 paused 만 가능합니다.');
     process.exit(1);
   }
 
@@ -88,7 +112,7 @@ async function main() {
 
   const partner = {
     id: args.id,
-    status: 'paused',
+    status,
     name: args.name,
     sido: args.sido,
     sgguNm: args.sggu ?? hira?.sgguCdNm ?? '',
@@ -122,11 +146,13 @@ async function main() {
   db.updatedAt = new Date().toISOString().slice(0, 10);
   writeFileSync(PARTNERS_FILE, JSON.stringify(db, null, 2) + '\n', 'utf8');
 
-  console.log(`\n✅ partners/partners.json 등록 완료 (status: paused)`);
-  console.log('다음 단계:');
-  console.log('  1. partners/partners.json에서 진료시간·특징·가격·FAQ 등 보완 (의료광고법 금지어 주의)');
-  console.log(`  2. status를 "active"로 변경`);
-  console.log('  3. node scripts/build.js → /clinics/' + args.id + '/ 생성 + 지역 아티클 자동 연동');
+  console.log(`\n✅ partners/partners.json 등록 완료 (id: ${args.id}, status: ${status})`);
+  if (status === 'paused') {
+    console.log('다음 단계:');
+    console.log('  1. partners/partners.json에서 진료시간·특징·가격·FAQ 등 보완 (의료광고법 금지어 주의)');
+    console.log('  2. status를 "active"로 변경 (node scripts/set-partner.js --id ' + args.id + ' --status active)');
+    console.log('  3. node scripts/build.js → /clinics/' + args.id + '/ 생성 + 지역 아티클 자동 연동');
+  }
 }
 
 main().catch(e => { console.error('✗ 오류:', e.message); process.exit(1); });

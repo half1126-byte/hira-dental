@@ -1,0 +1,113 @@
+# 거래처 원클릭 등록/해지 워크플로
+#
+# 사용법 (원버튼):
+#   GitHub 저장소 → Actions 탭 → "Partner 원클릭 등록·해지" → Run workflow
+#   → 작업 선택 + 기관명 입력 → Run workflow 버튼 클릭
+#
+# 동작:
+#   등록(add):        HIRA API 자동 조사 → partners.json 등록(즉시 active) → 커밋 → 빌드·배포 트리거
+#   해지(pause):      status → paused, 해지일 기록 → 다음 빌드에서 페이지 자동 제거
+#   재활성화(activate): status → active → 페이지 재생성
+#   삭제(remove):     DB에서 완전 삭제
+name: Partner 원클릭 등록·해지
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: '작업 (add=등록·노출 / pause=계약해지 / activate=재활성화 / remove=완전삭제)'
+        type: choice
+        required: true
+        options: [add, pause, activate, remove]
+      name:
+        description: '기관명 (add 필수, HIRA 신고명과 동일하게. 예: 트리움치과의원)'
+        required: false
+      sido:
+        description: '시도 (add 필수)'
+        type: choice
+        required: false
+        options: ['', 서울, 부산, 인천, 대구, 광주, 대전, 울산, 경기, 강원, 충북, 충남, 전북, 전남, 경북, 경남, 제주, 세종]
+      id:
+        description: 'URL slug (영문 소문자·하이픈. add에서 비우면 자동 생성 / pause·activate·remove는 필수)'
+        required: false
+      sggu:
+        description: '시군구 (선택, 예: 강동구)'
+        required: false
+      homepage:
+        description: '홈페이지 URL (선택)'
+        required: false
+
+permissions:
+  contents: write   # partners.json 커밋
+  actions: write    # 빌드·배포 워크플로 트리거
+
+concurrency:
+  group: partner-db
+  cancel-in-progress: false
+
+jobs:
+  partner:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: 등록 — HIRA 자동 조사 + active 등록
+        if: inputs.action == 'add'
+        env:
+          HIRA_API_KEY: ${{ secrets.HIRA_API_KEY }}
+        run: |
+          if [ -z "${{ inputs.name }}" ] || [ -z "${{ inputs.sido }}" ]; then
+            echo "::error::add 작업은 name과 sido가 필수입니다."; exit 1
+          fi
+          node scripts/add-partner.js \
+            --name "${{ inputs.name }}" \
+            --sido "${{ inputs.sido }}" \
+            --status active \
+            ${{ inputs.id != '' && format('--id "{0}"', inputs.id) || '' }} \
+            ${{ inputs.sggu != '' && format('--sggu "{0}"', inputs.sggu) || '' }} \
+            ${{ inputs.homepage != '' && format('--homepage "{0}"', inputs.homepage) || '' }}
+
+      - name: 해지 — paused 처리
+        if: inputs.action == 'pause'
+        run: node scripts/set-partner.js --id "${{ inputs.id }}" --status paused
+
+      - name: 재활성화
+        if: inputs.action == 'activate'
+        run: node scripts/set-partner.js --id "${{ inputs.id }}" --status active
+
+      - name: 완전 삭제
+        if: inputs.action == 'remove'
+        run: node scripts/set-partner.js --id "${{ inputs.id }}" --remove
+
+      - name: partners.json 커밋
+        run: |
+          git config user.name "partner-bot"
+          git config user.email "actions@github.com"
+          git add partners/partners.json
+          if git diff --cached --quiet; then
+            echo "변경 없음 — 커밋 생략"
+          else
+            git commit -m "partner: ${{ inputs.action }} ${{ inputs.name || inputs.id }} (원클릭 워크플로)"
+            git pull --rebase origin main
+            git push origin main
+          fi
+
+      - name: 빌드·배포 트리거
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh workflow run build.yml --ref main -R "${{ github.repository }}"
+          echo "✅ 빌드·배포가 시작되었습니다. Actions 탭의 'HIRA Data Refresh & Deploy' 실행을 확인하세요."
+          echo "   완료 후 확인: https://half1126-byte.github.io/hira-dental/clinics/"
