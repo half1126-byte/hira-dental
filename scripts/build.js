@@ -9,6 +9,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { fetchImplantPrices, fetchDentalHospList, fetchNationwideStats, SIDO } from './fetch-hira.js';
 import { generateRegionPage, generateSitemap } from './gen-pages.js';
+import { generateAllArticlesForSido, REGION_META } from './gen-articles.js';
 import { writeFileSync, mkdirSync } from 'node:fs';
 
 const __dir = dirname(fileURLToPath(import.meta.url));
@@ -88,26 +89,45 @@ async function main() {
     }
   }
 
-  // 3. 메인 인덱스 페이지는 index.html (정적으로 유지)
+  // 3. 아티클 페이지 생성 (시군구별 치과 추천 아티클)
+  console.log('\n── 3단계: 아티클 페이지 생성 ──');
+  const articlePages = [];
+  for (const r of REGION_META) {
+    console.log(`\n[${r.sido}] 아티클 생성 중...`);
+    try {
+      const results = generateAllArticlesForSido(r.dataKey, r.sido, r.sidoEn, BUILD_DATE, 1);
+      for (const res of results) {
+        articlePages.push({
+          path: `/articles/${res.sidoEn}-${res.sgguSlug}-implant/`,
+          priority: '0.8',
+          freq: 'weekly',
+        });
+      }
+    } catch (e) {
+      console.warn(`  ⚠ ${r.sido} 아티클 생성 오류: ${e.message}`);
+    }
+  }
+  console.log(`\n  → 총 ${articlePages.length}개 아티클 생성`);
 
   // 4. sitemap.xml 생성
-  console.log('\n── 3단계: sitemap.xml 생성 ──');
+  console.log('\n── 4단계: sitemap.xml 생성 ──');
   generateSitemap(
     [
       { path: '/', priority: '1.0', freq: 'daily' },
       { path: '/dental/', priority: '0.9', freq: 'weekly' },
       ...generatedPages,
       { path: '/dental/compare/', priority: '0.8', freq: 'weekly' },
+      ...articlePages,
     ],
     BUILD_DATE,
   );
 
   // 5. 시크릿 스캔 (빌드 결과물 대상)
-  console.log('\n── 4단계: 시크릿·광고법 스캔 ──');
+  console.log('\n── 5단계: 시크릿·광고법 스캔 ──');
   const { execSync } = await import('node:child_process');
   try {
     execSync(
-      'node -e "const{readdirSync,readFileSync}=require(\'fs\');const{join}=require(\'path\');function scan(d){for(const f of readdirSync(d,{withFileTypes:true})){if(f.isDirectory())scan(join(d,f.name));else if(f.name.endsWith(\'.html\')){const c=readFileSync(join(d,f.name),\'utf8\');const hits=[\'nO3sSSWe\',\'Gwwwwang94\'].filter(k=>c.includes(k));if(hits.length)throw new Error(\'SECRET LEAK: \'+join(d,f.name)+\' :: \'+hits.join(\',\'));}}};scan(\'dental\')"',
+      'node -e "const{readdirSync,readFileSync}=require(\'fs\');const{join}=require(\'path\');function scan(d){try{for(const f of readdirSync(d,{withFileTypes:true})){if(f.isDirectory())scan(join(d,f.name));else if(f.name.endsWith(\'.html\')){const c=readFileSync(join(d,f.name),\'utf8\');const hits=[\'nO3sSSWe\',\'Gwwwwang94\'].filter(k=>c.includes(k));if(hits.length)throw new Error(\'SECRET LEAK: \'+join(d,f.name)+\' :: \'+hits.join(\',\'));}}}catch(e){if(e.code!==\'ENOENT\')throw e}};scan(\'dental\');scan(\'articles\')"',
       { cwd: ROOT, stdio: 'inherit' },
     );
     console.log('  ✓ 시크릿 스캔 통과');
