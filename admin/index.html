@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>거래처 관리 | HIRA 치과 데이터 허브</title>
+<style>
+:root{--ink:#1c2b33;--sub:#52646d;--paper:#f7fafa;--card:#fff;--teal:#0e7c86;--teal-deep:#0a5d65;
+--teal-soft:#e2f1f2;--red:#b33a3a;--red-soft:#fceaea;--amber-soft:#fdf3e0;--line:#d9e5e7;
+--mono:ui-monospace,Consolas,monospace}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);line-height:1.6;font-size:15px;
+font-family:"Apple SD Gothic Neo",Pretendard,"Malgun Gothic","Noto Sans KR",sans-serif}
+.wrap{max-width:820px;margin:0 auto;padding:32px 16px 80px}
+h1{font-size:24px;margin:0 0 4px;font-weight:800}
+.sub{color:var(--sub);font-size:14px;margin:0 0 24px}
+h2{font-size:18px;margin:32px 0 12px;font-weight:800}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:18px 20px;margin:12px 0}
+label{display:block;font-size:13px;font-weight:700;color:var(--sub);margin:12px 0 4px}
+input,select,textarea{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:7px;
+font-size:15px;font-family:inherit;background:#fff;color:var(--ink)}
+input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid var(--teal);outline-offset:1px}
+textarea{min-height:64px;resize:vertical}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.row>div{flex:1;min-width:140px}
+button{cursor:pointer;border:0;border-radius:8px;padding:10px 18px;font-size:15px;font-weight:700;font-family:inherit}
+.btn-p{background:var(--teal);color:#fff}.btn-p:hover{background:var(--teal-deep)}
+.btn-s{background:var(--teal-soft);color:var(--teal-deep)}
+.btn-d{background:var(--red-soft);color:var(--red)}
+.btn-sm{padding:5px 12px;font-size:13px}
+.pill{display:inline-block;font-size:11.5px;font-weight:800;border-radius:999px;padding:2px 10px;letter-spacing:.04em}
+.pill.active{background:var(--teal-soft);color:var(--teal-deep)}
+.pill.paused{background:var(--red-soft);color:var(--red)}
+.pill.example{background:#eee;color:#777}
+.plist-item{display:flex;align-items:center;gap:12px;padding:13px 4px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.plist-item:last-child{border-bottom:0}
+.plist-name{font-weight:800;font-size:16px}
+.plist-meta{color:var(--sub);font-size:13px;flex:1}
+.msg{padding:12px 16px;border-radius:8px;margin:12px 0;font-size:14px;display:none}
+.msg.ok{background:var(--teal-soft);color:var(--teal-deep);display:block}
+.msg.err{background:var(--red-soft);color:var(--red);display:block}
+.msg.warn{background:var(--amber-soft);color:#92600a;display:block}
+.dyn-row{display:flex;gap:8px;margin-bottom:8px;align-items:flex-start}
+.dyn-row input{flex:1}.dyn-row .w-sm{flex:0 0 130px}
+.hint{font-size:12.5px;color:var(--sub);margin-top:3px}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;
+border-bottom:2px solid var(--teal);padding-bottom:16px;margin-bottom:8px}
+.status-dot{font-size:13px;color:var(--sub)}
+code{font-family:var(--mono);font-size:13px;background:var(--teal-soft);color:var(--teal-deep);border-radius:4px;padding:1px 6px}
+a{color:var(--teal-deep)}
+dialog{border:1px solid var(--line);border-radius:12px;padding:0;max-width:720px;width:94vw}
+dialog::backdrop{background:rgba(20,40,45,.45)}
+.dlg-body{padding:20px 22px;max-height:80vh;overflow-y:auto}
+.dlg-foot{display:flex;gap:10px;justify-content:flex-end;padding:14px 22px;border-top:1px solid var(--line)}
+.footer-note{margin-top:40px;font-size:12.5px;color:var(--sub)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="topbar">
+  <div>
+    <h1>🦷 거래처 관리</h1>
+    <p class="sub" style="margin:0">등록·수정·해지 — 저장하면 자동으로 빌드·배포·검색엔진 통지까지 진행됩니다</p>
+  </div>
+  <div style="text-align:right">
+    <div class="status-dot" id="deployStatus">배포 상태 확인 중…</div>
+    <a href="../" style="font-size:13px">홈페이지 보기 →</a>
+  </div>
+</div>
+
+<div id="msg" class="msg"></div>
+
+<!-- 토큰 설정 -->
+<div class="card" id="tokenCard">
+  <h2 style="margin-top:0">🔑 최초 1회: 접근 키 설정</h2>
+  <p style="font-size:14px;color:var(--sub);margin:6px 0 10px">
+    수정 권한을 위해 GitHub 토큰이 필요합니다 (이 브라우저에만 저장, 외부 전송 없음).<br>
+    <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">토큰 만들기 →</a>
+    에서 Repository access: <code>hira-dental</code> 선택, Permissions에서 <code>Contents</code>를
+    <strong>Read and write</strong>로 설정 후 생성해 붙여넣으세요.
+  </p>
+  <div class="row">
+    <div style="flex:3"><input type="password" id="tokenInput" placeholder="github_pat_..."></div>
+    <div style="flex:0 0 auto"><button class="btn-p" onclick="saveToken()">저장</button></div>
+  </div>
+</div>
+
+<!-- 거래처 목록 -->
+<h2>거래처 목록 <button class="btn-p btn-sm" style="margin-left:8px" onclick="openForm()">＋ 새 거래처 등록</button></h2>
+<div class="card" id="plist">불러오는 중…</div>
+
+<!-- 등록/수정 다이얼로그 -->
+<dialog id="dlg">
+  <form method="dialog" onsubmit="return false">
+  <div class="dlg-body">
+    <h2 style="margin:0 0 4px" id="dlgTitle">새 거래처 등록</h2>
+    <p class="hint">별표(*)만 필수입니다. 나머지는 나중에 채워도 됩니다. 가격·FAQ가 구체적일수록 AI 인용 확률이 올라갑니다.</p>
+
+    <div class="row">
+      <div><label>치과 이름 *</label><input id="f_name" placeholder="예: 트리움치과의원"></div>
+      <div class="w-sm" style="flex:0 0 120px"><label>지역 *</label>
+        <select id="f_sido"><option>서울</option><option>경기</option><option>부산</option><option>인천</option>
+        <option>대구</option><option>광주</option><option>대전</option><option>울산</option><option>강원</option>
+        <option>충북</option><option>충남</option><option>전북</option><option>전남</option><option>경북</option>
+        <option>경남</option><option>제주</option><option>세종</option></select></div>
+      <div><label>시군구</label><input id="f_sggu" placeholder="예: 강동구"></div>
+    </div>
+    <div class="row">
+      <div><label>주소</label><input id="f_addr"></div>
+    </div>
+    <div class="row">
+      <div><label>전화</label><input id="f_tel" placeholder="02-000-0000"></div>
+      <div><label>홈페이지</label><input id="f_homepage" placeholder="https://..."></div>
+    </div>
+    <div class="row">
+      <div><label>진료 분야 (쉼표로 구분)</label><input id="f_specialties" placeholder="임플란트, 치아교정, 심미보철"></div>
+    </div>
+    <div class="row">
+      <div><label>진료시간</label><input id="f_hours" placeholder="평일 09:30–18:30 · 토 09:30–14:00"></div>
+      <div><label>주차</label><input id="f_parking" placeholder="건물 내 주차 가능"></div>
+    </div>
+    <label>의료진 (한 줄에 한 명: 이름 | 직함)</label>
+    <textarea id="f_doctors" placeholder="홍길동 | 통합치의학과 전문의"></textarea>
+    <label>보유 장비 (쉼표로 구분)</label>
+    <input id="f_equipment" placeholder="3D CT(CBCT), 구강스캐너">
+    <label>진료 특징 (한 줄에 하나)</label>
+    <textarea id="f_features" placeholder="수요일 야간진료(20시까지)"></textarea>
+
+    <label>비급여 가격표 <button type="button" class="btn-s btn-sm" onclick="addPriceRow()">＋ 항목 추가</button></label>
+    <div id="priceRows"></div>
+
+    <label>자주 묻는 질문 <button type="button" class="btn-s btn-sm" onclick="addFaqRow()">＋ 질문 추가</button></label>
+    <div id="faqRows"></div>
+    <p class="hint">실제 환자가 AI에 묻는 문장 그대로 쓰세요. 예: "OO역 근처 임플란트 얼마인가요?"</p>
+
+    <label>상태</label>
+    <select id="f_status" style="max-width:260px">
+      <option value="active">active — 홈페이지에 게시</option>
+      <option value="paused">paused — 게시 안 함 (준비/해지)</option>
+    </select>
+    <p class="hint" id="lawWarn" style="color:var(--red)"></p>
+  </div>
+  <div class="dlg-foot">
+    <button class="btn-s" onclick="dlg.close()">취소</button>
+    <button class="btn-p" id="saveBtn" onclick="savePartner()">저장 → 자동 배포</button>
+  </div>
+  </form>
+</dialog>
+
+<p class="footer-note">
+  저장 시 <code>partners/partners.json</code>이 갱신되고 자동 빌드(5~10분)가 시작됩니다 ·
+  의료광고법 금지어(최고·1위·유일·완치 등)는 저장 전에 자동 검사됩니다 ·
+  주간 인용 리포트: <a href="https://github.com/half1126-byte/hira-dental/tree/main/reports" target="_blank" rel="noopener">reports 폴더</a>
+</p>
+</div>
+
+<script>
+const OWNER='half1126-byte', REPO='hira-dental', PATH='partners/partners.json';
+const API=`https://api.github.com/repos/${OWNER}/${REPO}`;
+const LAW=['최고','1위','최저가','유일','완치','보장','100%','최상급','명품','무통'];
+const SIDO_EN={서울:'seoul',경기:'gyeonggi',부산:'busan',인천:'incheon',대구:'daegu',광주:'gwangju',대전:'daejeon',울산:'ulsan',강원:'gangwon',충북:'chungbuk',충남:'chungnam',전북:'jeonbuk',전남:'jeonnam',경북:'gyeongbuk',경남:'gyeongnam',제주:'jeju',세종:'sejong'};
+let db=null, sha=null, editingId=null;
+const $=id=>document.getElementById(id);
+const dlg=$('dlg');
+
+function token(){return localStorage.getItem('gh_token')||''}
+function saveToken(){
+  const t=$('tokenInput').value.trim();
+  if(!t){show('err','토큰을 입력하세요.');return}
+  localStorage.setItem('gh_token',t);
+  $('tokenCard').style.display='none';
+  show('ok','접근 키 저장 완료. 이제 등록·수정이 가능합니다.');
+  load();
+}
+function show(type,text){const m=$('msg');m.className='msg '+type;m.textContent=text;
+  if(type==='ok')setTimeout(()=>{m.className='msg'},6000)}
+
+function hdrs(){const h={'Accept':'application/vnd.github+json'};
+  if(token())h['Authorization']='Bearer '+token();return h}
+
+async function load(){
+  try{
+    const r=await fetch(`${API}/contents/${PATH}?ref=main`,{headers:hdrs()});
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    const j=await r.json(); sha=j.sha;
+    db=JSON.parse(decodeURIComponent(escape(atob(j.content.replace(/\n/g,'')))));
+  }catch(e){
+    try{ // 토큰 없이 raw 폴백 (읽기 전용)
+      const r=await fetch(`https://raw.githubusercontent.com/${OWNER}/${REPO}/main/${PATH}?t=`+Date.now());
+      db=await r.json(); sha=null;
+    }catch(e2){$('plist').textContent='목록을 불러오지 못했습니다: '+e2.message;return}
+  }
+  renderList();
+}
+
+function renderList(){
+  const el=$('plist');
+  const ps=(db.partners||[]).filter(p=>p.status!=='example');
+  if(!ps.length){el.innerHTML='<p style="color:var(--sub)">등록된 거래처가 없습니다. "새 거래처 등록"을 눌러 시작하세요.</p>';return}
+  el.innerHTML=ps.map(p=>`
+    <div class="plist-item">
+      <span class="pill ${p.status}">${p.status==='active'?'게시 중':'중지'}</span>
+      <span class="plist-name">${esc(p.name)}</span>
+      <span class="plist-meta">${esc(p.sido)} ${esc(p.sgguNm||'')} · 가격 ${p.prices?.length||0}건 · FAQ ${p.faq?.length||0}건
+        ${p.status==='active'?` · <a href="../clinics/${p.id}/" target="_blank" rel="noopener">페이지 보기</a>`:''}</span>
+      <span>
+        <button class="btn-s btn-sm" onclick="openForm('${p.id}')">수정</button>
+        ${p.status==='active'
+          ?`<button class="btn-d btn-sm" onclick="setStatus('${p.id}','paused')">해지</button>`
+          :`<button class="btn-p btn-sm" onclick="setStatus('${p.id}','active')">게시</button>`}
+      </span>
+    </div>`).join('');
+}
+function esc(s){return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+
+function addPriceRow(v={}){
+  const d=document.createElement('div');d.className='dyn-row';
+  d.innerHTML=`<input placeholder="항목 (예: 임플란트 국산)" value="${esc(v.item||'')}" data-k="item">
+    <input class="w-sm" type="number" placeholder="가격(원)" value="${v.amt??''}" data-k="amt">
+    <input placeholder="비고 (예: 뼈이식 별도)" value="${esc(v.note||'')}" data-k="note">
+    <button type="button" class="btn-d btn-sm" onclick="this.parentNode.remove()">✕</button>`;
+  $('priceRows').appendChild(d);
+}
+function addFaqRow(v={}){
+  const d=document.createElement('div');d.className='dyn-row';
+  d.innerHTML=`<div style="flex:1"><input placeholder="질문" value="${esc(v.q||'')}" data-k="q" style="margin-bottom:6px">
+    <textarea placeholder="답변" data-k="a">${esc(v.a||'')}</textarea></div>
+    <button type="button" class="btn-d btn-sm" onclick="this.parentNode.remove()">✕</button>`;
+  $('faqRows').appendChild(d);
+}
+
+function openForm(id){
+  editingId=id||null;
+  $('dlgTitle').textContent=id?'거래처 정보 수정':'새 거래처 등록';
+  $('priceRows').innerHTML='';$('faqRows').innerHTML='';$('lawWarn').textContent='';
+  const p=id?(db.partners.find(x=>x.id===id)||{}):{};
+  $('f_name').value=p.name||'';$('f_sido').value=p.sido||'서울';$('f_sggu').value=p.sgguNm||'';
+  $('f_addr').value=p.addr||'';$('f_tel').value=p.tel||'';$('f_homepage').value=p.homepage||'';
+  $('f_specialties').value=(p.specialties||[]).join(', ');
+  $('f_hours').value=p.hours||'';$('f_parking').value=p.parking||'';
+  $('f_doctors').value=(p.doctors||[]).map(d=>d.title?`${d.name} | ${d.title}`:d.name).join('\n');
+  $('f_equipment').value=(p.equipment||[]).join(', ');
+  $('f_features').value=(p.features||[]).join('\n');
+  (p.prices||[]).forEach(addPriceRow);
+  (p.faq||[]).forEach(addFaqRow);
+  $('f_status').value=p.status==='paused'?'paused':'active';
+  dlg.showModal();
+}
+
+function collectRows(container){
+  return [...container.children].map(row=>{
+    const o={};row.querySelectorAll('[data-k]').forEach(i=>{
+      o[i.dataset.k]=i.dataset.k==='amt'?Number(i.value)||0:i.value.trim()});
+    return o;
+  }).filter(o=>Object.values(o).some(v=>v));
+}
+
+function makeId(name,sido){
+  const base=(SIDO_EN[sido]||'kr')+'-dental';
+  let n=(db.partners?.length||0)+1;
+  while(db.partners.some(p=>p.id===`${base}-${n}`))n++;
+  return `${base}-${n}`;
+}
+
+async function savePartner(){
+  if(!token()){show('err','먼저 상단에서 접근 키(토큰)를 설정하세요.');return}
+  const name=$('f_name').value.trim(), sido=$('f_sido').value;
+  if(!name){show('err','치과 이름은 필수입니다.');return}
+  const p={
+    id:editingId||makeId(name,sido),
+    status:$('f_status').value, name, sido,
+    sgguNm:$('f_sggu').value.trim(), addr:$('f_addr').value.trim(),
+    tel:$('f_tel').value.trim(), homepage:$('f_homepage').value.trim(),
+    specialties:$('f_specialties').value.split(',').map(s=>s.trim()).filter(Boolean),
+    doctors:$('f_doctors').value.split('\n').map(l=>l.trim()).filter(Boolean)
+      .map(l=>{const[n,t]=l.split('|').map(s=>s.trim());return t?{name:n,title:t}:{name:n}}),
+    equipment:$('f_equipment').value.split(',').map(s=>s.trim()).filter(Boolean),
+    hours:$('f_hours').value.trim(), parking:$('f_parking').value.trim(),
+    features:$('f_features').value.split('\n').map(l=>l.trim()).filter(Boolean),
+    prices:collectRows($('priceRows')).map(r=>({item:r.item,amt:r.amt,note:r.note})),
+    faq:collectRows($('faqRows')).map(r=>({q:r.q,a:r.a})),
+  };
+  // 금지어 검사
+  const text=JSON.stringify(p);
+  const hits=LAW.filter(w=>text.includes(w));
+  if(hits.length){$('lawWarn').textContent=`⚠ 의료광고법 금지어 발견: ${hits.join(', ')} — 사실 표현으로 바꿔주세요. (저장 불가)`;return}
+  // 병합
+  const old=editingId?db.partners.find(x=>x.id===editingId):null;
+  if(old){Object.assign(old,p,{hira:old.hira||{},contractStart:old.contractStart});
+    if(p.status==='paused'&&old.status!=='paused')old.contractEnd=today();
+    if(p.status==='active')delete old.contractEnd;}
+  else{
+    if(db.partners.some(x=>x.name===p.name&&x.sido===p.sido)){show('err','이미 등록된 거래처입니다. 목록에서 "수정"을 사용하세요.');return}
+    p.contractStart=today();p.hira={};db.partners.push(p);
+  }
+  await commit(`partner-admin: ${old?'수정':'등록'} ${name}`);
+  dlg.close();
+}
+
+async function setStatus(id,status){
+  if(!token()){show('err','먼저 상단에서 접근 키(토큰)를 설정하세요.');return}
+  const p=db.partners.find(x=>x.id===id);if(!p)return;
+  const label=status==='paused'?'해지(페이지 내림)':'재게시';
+  if(!confirm(`${p.name} — ${label} 하시겠습니까?`))return;
+  p.status=status;
+  if(status==='paused')p.contractEnd=today();else delete p.contractEnd;
+  await commit(`partner-admin: ${status==='paused'?'해지':'재활성'} ${p.name}`);
+}
+
+function today(){return new Date().toISOString().slice(0,10)}
+
+async function commit(message){
+  $('saveBtn').disabled=true;
+  try{
+    if(!sha){ // raw 폴백으로 읽었던 경우 sha 재취득
+      const r=await fetch(`${API}/contents/${PATH}?ref=main`,{headers:hdrs()});
+      if(!r.ok)throw new Error('저장소 접근 실패 — 토큰 권한(Contents: Read and write)을 확인하세요.');
+      sha=(await r.json()).sha;
+    }
+    db.updatedAt=today();
+    const content=btoa(unescape(encodeURIComponent(JSON.stringify(db,null,2)+'\n')));
+    const r=await fetch(`${API}/contents/${PATH}`,{method:'PUT',headers:hdrs(),
+      body:JSON.stringify({message,content,sha,branch:'main'})});
+    if(r.status===409){sha=null;show('warn','다른 곳에서 먼저 수정되었습니다. 새로고침 후 다시 시도하세요.');return}
+    if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.message||('HTTP '+r.status))}
+    sha=(await r.json()).content.sha;
+    show('ok','저장 완료 ✓ 자동 빌드가 시작되었습니다. 5~10분 뒤 홈페이지에 반영됩니다.');
+    renderList(); watchDeploy();
+  }catch(e){show('err','저장 실패: '+e.message)}
+  finally{$('saveBtn').disabled=false}
+}
+
+async function deployStatus(){
+  try{
+    const r=await fetch(`${API}/actions/runs?per_page=1&branch=main`,{headers:hdrs()});
+    const run=(await r.json()).workflow_runs?.[0];
+    if(!run)return '';
+    if(run.status==='completed')return run.conclusion==='success'
+      ?'✅ 최근 배포 성공 ('+run.updated_at.slice(0,16).replace('T',' ')+' UTC)'
+      :'❌ 최근 배포 실패 — 관리자에게 문의';
+    return '🔄 배포 진행 중…';
+  }catch(e){return ''}
+}
+async function watchDeploy(){
+  $('deployStatus').textContent=await deployStatus()||'배포 상태 확인 불가';
+}
+
+// init
+if(token())$('tokenCard').style.display='none';
+load(); watchDeploy(); setInterval(watchDeploy,60000);
+</script>
+</body>
+</html>
