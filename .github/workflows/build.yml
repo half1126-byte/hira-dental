@@ -37,10 +37,15 @@ jobs:
         env:
           HIRA_API_KEY: ${{ secrets.HIRA_API_KEY }}
 
+      - name: Prepare Pages output (_site)
+        run: |
+          mkdir -p _site
+          cp -r dental index.html style.css robots.txt llms.txt sitemap.xml _site/
+
       - name: Upload GitHub Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: '.'
+          path: '_site'
 
   deploy:
     needs: build
