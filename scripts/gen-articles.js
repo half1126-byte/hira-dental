@@ -105,7 +105,7 @@ function buildClinicSection(clinic, rank, sidoNm) {
     <div class="clinic-meta-row">
       ${sggu ? `<span class="meta-tag">📍 ${sggu}</span>` : ''}
       <span class="meta-tag hira-tag">HIRA 공개 데이터</span>
-      ${pUrl ? `<a class="meta-tag partner-tag" href="${pUrl}">제휴 · 상세 프로필 →</a>` : ''}
+      ${pUrl ? `<a class="meta-tag partner-tag" href="${pUrl}">상세 프로필 →</a>` : ''}
     </div>
     <div class="price-highlight-box">
       <div class="ph-label">HIRA 비급여 신고 가격 (${item})</div>
@@ -128,7 +128,7 @@ function buildCompareTable(clinics, sidoNm) {
     return `
     <tr>
       <td>${i + 1}</td>
-      <td>${c.yadmNm ?? ''}${pUrl ? ` <a class="partner-tag-sm" href="${pUrl}">제휴·프로필</a>` : ''}</td>
+      <td>${c.yadmNm ?? ''}${pUrl ? ` <a class="partner-tag-sm" href="${pUrl}">상세정보</a>` : ''}</td>
       <td>${c.sgguCdNm ?? ''}</td>
       <td class="price-cell">${formatPrice(c.curAmt)}</td>
       <td>${formatPrice(c.minAmt)}</td>

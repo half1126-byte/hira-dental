@@ -11,7 +11,7 @@
  *
  * 법규 준수:
  *  - 의료광고법 제56조 LAW_HARD 금지어 0건 (빌드 시 검사)
- *  - 표시광고법: 제휴(경제적 대가) 사실 고지 문구 필수 포함
+ *  - 표시광고법: 경제적 대가 관련 최소 고지 1줄 (하단 출처 박스)
  */
 
 import { readFileSync, writeFileSync, mkdirSync, existsSync, readdirSync, rmSync } from 'node:fs';
@@ -29,10 +29,10 @@ const SITE_NAME = 'HIRA 비급여 치과 데이터 허브';
 
 const LAW_HARD = ['최고', '1위', '최저가', '유일', '완치', '보장', '100%', '최상급', '명품', '무통'];
 
+// 표시광고법상 최소 고지 (하단 출처 박스 1줄만 노출)
 const DISCLOSURE =
-  '본 프로필은 해당 의료기관과의 정보 제공 계약(제휴)에 따라 게재되었습니다. ' +
-  '가격·시설 정보는 의료기관 제공 자료와 건강보험심사평가원(HIRA) 비급여 공개 데이터를 기반으로 하며, ' +
-  '치료 효과를 보증하거나 특정 의료기관의 우월성을 주장하지 않습니다.';
+  '본 프로필은 해당 의료기관이 제공·확인한 자료와 건강보험심사평가원(HIRA) 공개 데이터를 기반으로 작성되었으며, ' +
+  '게재에 경제적 대가가 포함될 수 있습니다. 치료 효과를 보증하거나 특정 의료기관의 우월성을 주장하지 않습니다.';
 
 function fmt(amt) {
   if (amt == null || isNaN(Number(amt))) return '정보 없음';
@@ -230,11 +230,10 @@ function generatePartnerHtml(p, buildDate) {
       <span>${esc(p.name)}</span>
     </nav>
     <h1>${esc(p.name)}</h1>
-    <p class="article-sub">${esc(p.sido)} ${esc(p.sgguNm)} · ${buildDate} 기준 · 제휴 의료기관 프로필</p>
+    <p class="article-sub">${esc(p.sido)} ${esc(p.sgguNm)} · ${buildDate} 기준 · 치과 정보 프로필</p>
     <div class="hero-badges">
       <span class="badge badge-hira">HIRA 데이터 연동</span>
       <span class="badge badge-law">의료광고법 준수</span>
-      <span class="badge partner-badge">제휴 프로필</span>
     </div>
   </div>
 </section>
@@ -244,10 +243,6 @@ function generatePartnerHtml(p, buildDate) {
   <section class="key-result-section">
     <h2>핵심 요약</h2>
     <p>${buildSummary(p, hiraPrices, buildDate)}</p>
-    <div class="notice-box" style="margin-top:1rem">
-      <div class="notice-icon">ℹ</div>
-      <div class="notice-text">${DISCLOSURE}</div>
-    </div>
   </section>
 
   <section class="clinics-detail-section">
@@ -315,7 +310,7 @@ function generatePartnerHtml(p, buildDate) {
       <a href="${BASE_URL}/clinics/">치과 프로필</a>
       <a href="https://www.hira.or.kr" target="_blank" rel="noopener">HIRA 심평원</a>
     </div>
-    <p class="footer-note">건강보험심사평가원 공공데이터 기반 · 의료광고법 제56조 준수 · 제휴 여부 고지</p>
+    <p class="footer-note">건강보험심사평가원 공공데이터 기반 · 의료광고법 제56조 준수</p>
     <p class="footer-copy">© ${new Date().getFullYear()} ${SITE_NAME}</p>
   </div>
 </footer>
@@ -352,7 +347,7 @@ function generateIndexHtml(partners, buildDate) {
   const itemList = {
     '@context': 'https://schema.org',
     '@type': 'ItemList',
-    name: '제휴 치과 프로필 목록',
+    name: '치과 프로필 목록',
     itemListElement: partners.map((p, i) => ({
       '@type': 'ListItem', position: i + 1, name: p.name,
       url: `${BASE_URL}/clinics/${p.id}/`,
@@ -366,7 +361,7 @@ function generateIndexHtml(partners, buildDate) {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="robots" content="index, follow">
   <title>치과 프로필 디렉터리 | ${SITE_NAME}</title>
-  <meta name="description" content="제휴 치과 프로필 디렉터리. 위치·진료 분야·비급여 가격 정보를 HIRA 공개 데이터와 함께 제공합니다.">
+  <meta name="description" content="치과 프로필 디렉터리. 위치·진료 분야·비급여 가격 정보를 HIRA 공개 데이터와 함께 제공합니다.">
   <link rel="canonical" href="${BASE_URL}/clinics/">
   <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" rel="stylesheet">
   <link rel="stylesheet" href="${BASE_URL}/style.css">
@@ -383,7 +378,7 @@ function generateIndexHtml(partners, buildDate) {
 <section class="article-hero">
   <div class="inner">
     <h1>치과 프로필 디렉터리</h1>
-    <p class="article-sub">${partners.length}개 제휴 의료기관 · ${buildDate} 기준 · 제휴 여부 고지</p>
+    <p class="article-sub">${partners.length}개 의료기관 상세 정보 · ${buildDate} 기준</p>
   </div>
 </section>
 <main class="inner article-body">
