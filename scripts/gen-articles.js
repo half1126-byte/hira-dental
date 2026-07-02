@@ -6,7 +6,7 @@
  * 의료광고법 제56조: LAW_HARD 0건 (최고/1위/최저가/유일/완치/보장/100%/최상급/명품 금지)
  */
 
-import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, existsSync, readdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadPartners, buildPartnerIndex } from './gen-partners.js';
@@ -507,4 +507,76 @@ if (process.argv[1]?.endsWith('gen-articles.js')) {
   }
 
   console.log(`\n✅ 총 ${totalArticles}개 아티클 생성 완료`);
+}
+
+/** /articles/ — 아티클 목록 페이지 (생성된 아티클 디렉터리 스캔) */
+export function generateArticlesIndex(buildDate) {
+  const dirs = readdirSync(OUT_DIR, { withFileTypes: true })
+    .filter(d => d.isDirectory())
+    .map(d => d.name)
+    .sort();
+
+  const items = [];
+  for (const dir of dirs) {
+    const f = join(OUT_DIR, dir, 'index.html');
+    if (!existsSync(f)) continue;
+    const m = readFileSync(f, 'utf8').match(/<h1>([^<]+)<\/h1>/);
+    items.push({ dir, title: m ? m[1] : dir });
+  }
+
+  const cards = items.map(it => `
+    <a class="region-card" href="${BASE_URL}/articles/${it.dir}/">
+      <h3>${it.title.replace(' 임플란트 치과 가격 정보', '')}</h3>
+      <p>임플란트 가격 정보</p>
+    </a>`).join('');
+
+  const html = `<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="index, follow">
+  <title>시군구별 임플란트 가격 아티클 ${items.length}개 | HIRA 비급여 데이터</title>
+  <meta name="description" content="서울·경기·부산·인천 ${items.length}개 시군구별 치과 임플란트 비급여 가격 아티클. 건강보험심사평가원 공개 데이터 기반.">
+  <link rel="canonical" href="${BASE_URL}/articles/">
+  <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="${BASE_URL}/style.css">
+  <link rel="stylesheet" href="${BASE_URL}/article.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="inner">
+    <a class="logo" href="${BASE_URL}/">HIRA 치과 데이터 허브</a>
+    <nav>
+      <a href="${BASE_URL}/dental/">지역별 비교</a>
+      <a href="${BASE_URL}/clinics/">치과 프로필</a>
+    </nav>
+  </div>
+</header>
+<section class="article-hero">
+  <div class="inner">
+    <h1>시군구별 임플란트 가격 아티클</h1>
+    <p class="article-sub">${items.length}개 지역 · ${buildDate} 기준 · HIRA 공개 데이터</p>
+  </div>
+</section>
+<main class="inner article-body">
+  <section class="clinics-detail-section">
+    <div class="guide-grid">${cards || '<p class="no-data">아티클 준비 중입니다.</p>'}</div>
+  </section>
+</main>
+<footer class="site-footer">
+  <div class="inner">
+    <div class="footer-links">
+      <a href="${BASE_URL}/">홈</a>
+      <a href="${BASE_URL}/dental/">지역별 비교</a>
+    </div>
+    <p class="footer-note">건강보험심사평가원 공공데이터 기반 · 의료광고법 제56조 준수</p>
+  </div>
+</footer>
+</body>
+</html>`;
+
+  checkLawHard(html, 'articles/index.html');
+  writeFileSync(join(OUT_DIR, 'index.html'), html, 'utf8');
+  console.log(`  ✓ articles/index.html (목록 ${items.length}건)`);
 }

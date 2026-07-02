@@ -34,6 +34,12 @@ const DISCLOSURE =
   '본 프로필은 해당 의료기관이 제공·확인한 자료와 건강보험심사평가원(HIRA) 공개 데이터를 기반으로 작성되었으며, ' +
   '게재에 경제적 대가가 포함될 수 있습니다. 치료 효과를 보증하거나 특정 의료기관의 우월성을 주장하지 않습니다.';
 
+// 지역 비교 페이지 URL (비교 페이지 있는 시도는 직결, 그 외 허브)
+const REGION_EN = { 서울: 'seoul', 경기: 'gyeonggi', 부산: 'busan', 인천: 'incheon' };
+function regionCompareUrl(sido) {
+  return REGION_EN[sido] ? `${BASE_URL}/dental/${REGION_EN[sido]}-implant/` : `${BASE_URL}/dental/`;
+}
+
 function fmt(amt) {
   if (amt == null || isNaN(Number(amt))) return '정보 없음';
   return Number(amt).toLocaleString('ko-KR') + '원';
@@ -298,7 +304,7 @@ function generatePartnerHtml(p, buildDate) {
 
   <section class="related-section">
     <h2>같은 지역 가격 비교</h2>
-    <a href="${BASE_URL}/dental/" class="cta-btn">${esc(p.sido)} 지역 임플란트 가격 비교 보기 →</a>
+    <a href="${regionCompareUrl(p.sido)}" class="cta-btn">${esc(p.sido)} 지역 임플란트 가격 비교 보기 →</a>
   </section>
 
 </main>
