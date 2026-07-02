@@ -290,3 +290,148 @@ ${entries}
   writeFileSync(join(ROOT, 'sitemap.xml'), xml);
   console.log('  ✓ sitemap.xml 생성');
 }
+
+/** 공통 페이지 셸 */
+function pageShell({ title, desc, canonicalPath, heroTitle, heroSub, body, buildDate }) {
+  return `<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="index, follow">
+  <title>${title}</title>
+  <meta name="description" content="${desc}">
+  <link rel="canonical" href="${BASE_URL}${canonicalPath}">
+  <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="${BASE_URL}/style.css">
+  <link rel="stylesheet" href="${BASE_URL}/article.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="inner">
+    <a class="logo" href="${BASE_URL}/">HIRA 치과 데이터 허브</a>
+    <nav>
+      <a href="${BASE_URL}/dental/">지역별 비교</a>
+      <a href="${BASE_URL}/articles/">지역 아티클</a>
+      <a href="${BASE_URL}/clinics/">치과 프로필</a>
+    </nav>
+  </div>
+</header>
+<section class="article-hero">
+  <div class="inner">
+    <h1>${heroTitle}</h1>
+    <p class="article-sub">${heroSub} · ${buildDate} 기준</p>
+  </div>
+</section>
+<main class="inner article-body">
+${body}
+</main>
+<footer class="site-footer">
+  <div class="inner">
+    <div class="footer-links">
+      <a href="${BASE_URL}/">홈</a>
+      <a href="${BASE_URL}/dental/">지역별 비교</a>
+      <a href="https://www.hira.or.kr" target="_blank" rel="noopener">HIRA 심평원</a>
+    </div>
+    <p class="footer-note">건강보험심사평가원 공공데이터 기반 · 의료광고법 제56조 준수</p>
+  </div>
+</footer>
+</body>
+</html>`;
+}
+
+const HUB_REGIONS = [
+  { nm: '서울', en: 'seoul' }, { nm: '경기', en: 'gyeonggi' },
+  { nm: '부산', en: 'busan' }, { nm: '인천', en: 'incheon' },
+];
+
+/** 지역 데이터 요약 통계 (데이터 없으면 null) */
+function regionStats(en) {
+  const f = join(DATA, `${en}-implant.json`);
+  if (!existsSync(f)) return null;
+  try {
+    const prices = (JSON.parse(readFileSync(f, 'utf8')).prices ?? []).filter(p => Number(p.curAmt) > 0);
+    if (!prices.length) return null;
+    const amts = prices.map(p => Number(p.curAmt));
+    return {
+      count: prices.length,
+      avg: Math.round(amts.reduce((a, b) => a + b, 0) / amts.length),
+      min: Math.min(...amts),
+      max: Math.max(...amts),
+    };
+  } catch { return null; }
+}
+
+/** /dental/ — 치과 허브 페이지 */
+export function generateDentalHub(buildDate) {
+  const cards = HUB_REGIONS.map(r => {
+    const s = regionStats(r.en);
+    return `
+    <a class="region-card" href="${BASE_URL}/dental/${r.en}-implant/">
+      <h3>${r.nm} 임플란트</h3>
+      <p>${s ? `${s.count}개 기관 · 평균 신고가 ${formatAmt(s.avg)}` : 'HIRA 신고 가격 비교'}</p>
+    </a>`;
+  }).join('');
+
+  const html = pageShell({
+    title: '지역별 치과 임플란트 가격 비교 | HIRA 비급여 데이터',
+    desc: '건강보험심사평가원 공개 데이터 기반 서울·경기·부산·인천 치과 임플란트 비급여 신고 가격 비교.',
+    canonicalPath: '/dental/',
+    heroTitle: '지역별 임플란트 가격 비교',
+    heroSub: 'HIRA 비급여 신고 데이터',
+    buildDate,
+    body: `
+  <section class="clinics-detail-section">
+    <h2>지역을 선택하세요</h2>
+    <div class="guide-grid">${cards}</div>
+  </section>
+  <section class="related-section">
+    <h2>더 보기</h2>
+    <a href="${BASE_URL}/dental/compare/" class="cta-btn">전국 지역 비교 →</a>
+    <a href="${BASE_URL}/articles/" class="cta-btn cta-secondary">시군구별 상세 아티클 →</a>
+  </section>`,
+  });
+  checkLawHard(html, 'dental/index.html');
+  writeFileSync(join(DENTAL, 'index.html'), html);
+  console.log('  ✓ dental/index.html (허브)');
+}
+
+/** /dental/compare/ — 전국 비교 페이지 */
+export function generateComparePage(buildDate) {
+  const rows = HUB_REGIONS.map(r => {
+    const s = regionStats(r.en);
+    return `
+    <tr>
+      <td><a href="${BASE_URL}/dental/${r.en}-implant/">${r.nm}</a></td>
+      <td>${s ? s.count + '곳' : '준비 중'}</td>
+      <td class="price-cell">${s ? formatAmt(s.avg) : '-'}</td>
+      <td>${s ? `${formatAmt(s.min)} ~ ${formatAmt(s.max)}` : '-'}</td>
+    </tr>`;
+  }).join('');
+
+  const html = pageShell({
+    title: '전국 치과 임플란트 비급여 가격 비교 (지역별 평균) | HIRA 데이터',
+    desc: '서울·경기·부산·인천 치과병원 임플란트 비급여 신고가의 지역별 평균·범위 비교. 건강보험심사평가원 공개 데이터 기반.',
+    canonicalPath: '/dental/compare/',
+    heroTitle: '전국 임플란트 가격 비교',
+    heroSub: '지역별 평균 신고가 · HIRA 공개 데이터',
+    buildDate,
+    body: `
+  <section class="compare-section">
+    <h2>지역별 임플란트 신고가 요약은?</h2>
+    <table class="compare-table">
+      <thead><tr><th>지역</th><th>신고 기관 수</th><th>평균 신고가</th><th>신고가 범위</th></tr></thead>
+      <tbody>${rows}</tbody>
+      <tfoot><tr><td colspan="4" class="tfoot-note">출처: 건강보험심사평가원 비급여진료비 공개 데이터 (치과병원 기준, ${buildDate})</td></tr></tfoot>
+    </table>
+    <div class="notice-box" style="margin-top:1rem">
+      <div class="notice-icon">ℹ</div>
+      <div class="notice-text">평균은 지역 내 신고 기관들의 단순 평균이며, 실제 진료비는 뼈이식·상부구조물 등에 따라 달라질 수 있습니다. 지역명을 클릭하면 기관별 상세 가격을 볼 수 있습니다.</div>
+    </div>
+  </section>`,
+  });
+  checkLawHard(html, 'dental/compare/index.html');
+  mkdirSync(join(DENTAL, 'compare'), { recursive: true });
+  writeFileSync(join(DENTAL, 'compare', 'index.html'), html);
+  console.log('  ✓ dental/compare/index.html (전국 비교)');
+}

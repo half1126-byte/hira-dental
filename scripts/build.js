@@ -8,8 +8,8 @@ import { existsSync, readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { fetchImplantPrices, fetchDentalHospList, fetchNationwideStats, SIDO } from './fetch-hira.js';
-import { generateRegionPage, generateSitemap } from './gen-pages.js';
-import { generateAllArticlesForSido, REGION_META } from './gen-articles.js';
+import { generateRegionPage, generateSitemap, generateDentalHub, generateComparePage } from './gen-pages.js';
+import { generateAllArticlesForSido, generateArticlesIndex, REGION_META } from './gen-articles.js';
 import { generateAllPartnerPages } from './gen-partners.js';
 import { enrichPartners } from './enrich-partners.js';
 import { writeFileSync, mkdirSync } from 'node:fs';
@@ -91,6 +91,15 @@ async function main() {
     }
   }
 
+  // 2.5 치과 허브 + 전국 비교 페이지
+  try {
+    generateDentalHub(BUILD_DATE);
+    generateComparePage(BUILD_DATE);
+  } catch (e) {
+    console.error(`  ✗ 허브/비교 페이지 생성 실패: ${e.message}`);
+    process.exit(1);
+  }
+
   // 3. 아티클 페이지 생성 (시군구별 치과 추천 아티클)
   console.log('\n── 3단계: 아티클 페이지 생성 ──');
   const articlePages = [];
@@ -110,6 +119,12 @@ async function main() {
     }
   }
   console.log(`\n  → 총 ${articlePages.length}개 아티클 생성`);
+  try {
+    generateArticlesIndex(BUILD_DATE);
+  } catch (e) {
+    console.error(`  ✗ 아티클 목록 생성 실패: ${e.message}`);
+    process.exit(1);
+  }
 
   // 3.4 거래처 HIRA 자동 보강 (CI Secret 키 사용, 키 없으면 생략)
   console.log('\n── 3.4단계: 거래처 HIRA 자동 보강 ──');
@@ -137,6 +152,7 @@ async function main() {
       { path: '/dental/', priority: '0.9', freq: 'weekly' },
       ...generatedPages,
       { path: '/dental/compare/', priority: '0.8', freq: 'weekly' },
+      { path: '/articles/', priority: '0.8', freq: 'weekly' },
       ...articlePages,
       ...partnerPages,
     ],
