@@ -1,0 +1,292 @@
+/* hira-dental/style.css — geo-hub 동일 CSS 토큰 기반 */
+
+:root {
+  --bg-1: #05050a;
+  --bg-2: #0d0d18;
+  --bg-3: #13131f;
+  --surface: #1a1a2a;
+  --border: #2a2a3d;
+  --plum: #8052ff;
+  --plum-light: #a07fff;
+  --gold: #ffb829;
+  --teal: #3dddca;
+  --red: #ff4d4f;
+  --text-1: #f0f0f8;
+  --text-2: #b8b8d0;
+  --text-3: #7878a0;
+  --font: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
+  --radius: 12px;
+  --radius-sm: 8px;
+  --max-w: 1100px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { font-size: 16px; scroll-behavior: smooth; }
+
+body {
+  font-family: var(--font);
+  background: var(--bg-1);
+  color: var(--text-1);
+  line-height: 1.7;
+}
+
+a { color: var(--plum-light); text-decoration: none; }
+a:hover { color: var(--gold); }
+
+/* ── 레이아웃 ── */
+.inner { max-width: var(--max-w); margin: 0 auto; padding: 0 1.25rem; }
+
+/* ── 헤더 ── */
+.site-header {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(5, 5, 10, 0.92);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  padding: 0.9rem 0;
+}
+.site-header .inner {
+  display: flex; align-items: center; justify-content: space-between;
+}
+.site-header .logo {
+  font-size: 1.05rem; font-weight: 700; color: var(--text-1);
+  letter-spacing: -0.02em;
+}
+.site-header nav { display: flex; gap: 1.5rem; }
+.site-header nav a { font-size: 0.875rem; color: var(--text-2); }
+.site-header nav a:hover { color: var(--text-1); }
+
+/* ── 히어로 ── */
+.hero-section {
+  padding: 3.5rem 0 2.5rem;
+  background: linear-gradient(180deg, var(--bg-2) 0%, var(--bg-1) 100%);
+  border-bottom: 1px solid var(--border);
+}
+.breadcrumb {
+  display: flex; align-items: center; gap: 0.4rem;
+  font-size: 0.8rem; color: var(--text-3); margin-bottom: 1rem;
+}
+.breadcrumb a { color: var(--text-3); }
+.breadcrumb a:hover { color: var(--text-2); }
+.hero-section h1 {
+  font-size: clamp(1.6rem, 4vw, 2.4rem);
+  font-weight: 800; letter-spacing: -0.04em;
+  color: var(--text-1); margin-bottom: 0.6rem;
+}
+.hero-sub { color: var(--text-2); font-size: 0.95rem; margin-bottom: 1rem; }
+.hero-badges { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.badge {
+  display: inline-flex; align-items: center;
+  padding: 0.25rem 0.75rem; border-radius: 999px;
+  font-size: 0.75rem; font-weight: 600;
+}
+.badge-hira { background: rgba(128, 82, 255, 0.15); color: var(--plum-light); border: 1px solid rgba(128,82,255,0.3); }
+.badge-law { background: rgba(255, 184, 41, 0.12); color: var(--gold); border: 1px solid rgba(255,184,41,0.25); }
+.badge-update { background: rgba(61, 221, 202, 0.12); color: var(--teal); border: 1px solid rgba(61,221,202,0.25); }
+
+/* ── 공지 박스 ── */
+.notice-section { padding: 1.5rem 0; }
+.notice-box {
+  display: flex; gap: 1rem; align-items: flex-start;
+  background: rgba(255,184,41,0.08); border: 1px solid rgba(255,184,41,0.2);
+  border-radius: var(--radius-sm); padding: 1rem 1.25rem;
+}
+.notice-icon { font-size: 1.1rem; color: var(--gold); flex-shrink: 0; margin-top: 0.1rem; }
+.notice-text { font-size: 0.875rem; color: var(--text-2); }
+.notice-text strong { color: var(--text-1); }
+
+/* ── 요약 카드 ── */
+.summary-section { padding: 2rem 0; }
+.section-title {
+  font-size: 1.25rem; font-weight: 700; margin-bottom: 1rem;
+  letter-spacing: -0.02em;
+}
+.summary-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+.summary-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 1.25rem;
+}
+.summary-label { font-size: 0.8rem; color: var(--text-3); margin-bottom: 0.4rem; }
+.summary-value { font-size: 2rem; font-weight: 800; color: var(--plum-light); }
+.summary-value .unit { font-size: 1rem; font-weight: 600; margin-left: 0.2rem; }
+.summary-value-range { font-size: 1.2rem; font-weight: 700; color: var(--gold); }
+.summary-value-text { font-size: 1rem; font-weight: 700; color: var(--teal); }
+.summary-desc { font-size: 0.75rem; color: var(--text-3); margin-top: 0.35rem; }
+
+/* ── 비교 표 ── */
+.compare-section { padding: 2rem 0; }
+.section-desc { font-size: 0.875rem; color: var(--text-3); margin-bottom: 1rem; }
+
+.compare-table {
+  width: 100%; border-collapse: collapse;
+  font-size: 0.85rem;
+  background: var(--surface); border-radius: var(--radius);
+  overflow: hidden;
+}
+.compare-table th {
+  background: var(--bg-3); color: var(--text-2);
+  padding: 0.75rem 1rem; text-align: left;
+  font-weight: 600; font-size: 0.78rem;
+  border-bottom: 1px solid var(--border);
+}
+.compare-table td {
+  padding: 0.7rem 1rem; color: var(--text-1);
+  border-bottom: 1px solid var(--border);
+}
+.compare-table tr:last-child td { border-bottom: none; }
+.compare-table tr:hover td { background: rgba(255,255,255,0.03); }
+.price-cell { font-weight: 700; color: var(--gold); }
+.tfoot-note {
+  color: var(--text-3); font-size: 0.75rem; padding: 0.6rem 1rem;
+  background: var(--bg-3);
+}
+
+/* ── 클리닉 카드 ── */
+.clinics-section { padding: 2rem 0; }
+.clinic-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1rem;
+}
+.clinic-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 1.25rem;
+  transition: border-color 0.2s;
+  position: relative; overflow: hidden;
+}
+.clinic-card:hover { border-color: var(--plum); }
+.clinic-rank {
+  position: absolute; top: 1rem; right: 1rem;
+  font-size: 0.7rem; font-weight: 800; color: var(--text-3);
+  letter-spacing: 0.05em;
+}
+.clinic-name {
+  font-size: 1rem; font-weight: 700; margin-bottom: 0.4rem;
+  padding-right: 2.5rem;
+}
+.clinic-meta {
+  display: flex; align-items: center; gap: 0.35rem; flex-wrap: wrap;
+  font-size: 0.78rem; color: var(--text-3); margin-bottom: 0.75rem;
+}
+.clinic-price-row {
+  display: flex; justify-content: space-between; align-items: center;
+  background: rgba(128,82,255,0.08); border: 1px solid rgba(128,82,255,0.2);
+  border-radius: var(--radius-sm); padding: 0.5rem 0.75rem; margin-bottom: 0.75rem;
+}
+.price-label { font-size: 0.75rem; color: var(--plum-light); }
+.price-value { font-size: 0.95rem; font-weight: 700; color: var(--gold); }
+.clinic-addr { font-size: 0.78rem; color: var(--text-3); margin-bottom: 0.4rem; }
+.clinic-rmrk { font-size: 0.75rem; color: var(--text-3); font-style: italic; margin-bottom: 0.4rem; }
+.hira-badge {
+  display: inline-flex; align-items: center;
+  font-size: 0.7rem; color: var(--text-3);
+  border-top: 1px solid var(--border); padding-top: 0.5rem; margin-top: 0.5rem;
+  width: 100%;
+}
+.no-data { color: var(--text-3); padding: 2rem; text-align: center; }
+
+/* ── 가이드 ── */
+.guide-section { padding: 2rem 0; }
+.guide-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 1rem;
+}
+.guide-card {
+  background: var(--bg-3); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 1.25rem;
+}
+.guide-card h3 {
+  font-size: 0.9rem; font-weight: 700; margin-bottom: 0.6rem;
+  color: var(--plum-light);
+}
+.guide-card p { font-size: 0.85rem; color: var(--text-2); }
+
+/* ── FAQ ── */
+.faq-section { padding: 2rem 0; }
+.faq-list { display: flex; flex-direction: column; gap: 0.5rem; }
+.faq-item {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); overflow: hidden;
+}
+.faq-item summary {
+  cursor: pointer; padding: 1rem 1.25rem;
+  font-size: 0.9rem; font-weight: 600; list-style: none;
+  display: flex; justify-content: space-between; align-items: center;
+}
+.faq-item summary::after { content: '+'; color: var(--plum); font-size: 1.1rem; }
+.faq-item[open] summary::after { content: '−'; }
+.faq-ans {
+  padding: 0 1.25rem 1rem; font-size: 0.875rem;
+  color: var(--text-2); line-height: 1.7;
+}
+
+/* ── 출처 ── */
+.source-section { padding: 2rem 0; }
+.source-box {
+  background: var(--bg-3); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 1.5rem;
+}
+.source-box h3 { font-size: 0.95rem; font-weight: 700; margin-bottom: 0.75rem; }
+.source-box ul { padding-left: 1.25rem; }
+.source-box li { font-size: 0.85rem; color: var(--text-2); margin-bottom: 0.35rem; }
+.source-box a { color: var(--teal); }
+
+/* ── 푸터 ── */
+.site-footer {
+  border-top: 1px solid var(--border); padding: 2rem 0;
+  background: var(--bg-2); margin-top: 3rem;
+}
+.footer-links {
+  display: flex; gap: 1.25rem; flex-wrap: wrap; margin-bottom: 0.75rem;
+}
+.footer-links a { font-size: 0.85rem; color: var(--text-3); }
+.footer-note { font-size: 0.8rem; color: var(--text-3); margin-bottom: 0.5rem; line-height: 1.6; }
+.footer-copy { font-size: 0.75rem; color: var(--text-3); }
+
+/* ── CTA 버튼 ── */
+.cta-btn {
+  display: inline-flex; align-items: center;
+  padding: 0.7rem 1.5rem; border-radius: var(--radius-sm);
+  background: var(--plum); color: #fff;
+  font-weight: 700; font-size: 0.95rem;
+  transition: background 0.2s, transform 0.1s;
+}
+.cta-btn:hover { background: var(--plum-light); color: #fff; transform: translateY(-1px); }
+.cta-secondary {
+  background: transparent; border: 1px solid var(--border);
+  color: var(--text-1);
+}
+.cta-secondary:hover { background: var(--surface); border-color: var(--plum); color: var(--text-1); }
+
+/* ── 지역 그리드 ── */
+.region-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+}
+.region-card {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 2rem 1rem; text-align: center;
+  color: var(--text-1); transition: border-color 0.2s, transform 0.15s;
+  min-height: 140px;
+}
+.region-card:hover { border-color: var(--plum); transform: translateY(-2px); color: var(--text-1); }
+.region-name { font-size: 1.5rem; font-weight: 800; margin-bottom: 0.2rem; }
+.region-sub { font-size: 0.75rem; color: var(--text-3); margin-bottom: 0.75rem; letter-spacing: 0.05em; }
+.region-badge {
+  font-size: 0.7rem; font-weight: 600;
+  padding: 0.2rem 0.6rem; border-radius: 999px;
+  background: rgba(61,221,202,0.1); color: var(--teal); border: 1px solid rgba(61,221,202,0.2);
+}
+
+/* ── 반응형 ── */
+@media (max-width: 640px) {
+  .compare-table { font-size: 0.75rem; }
+  .compare-table th, .compare-table td { padding: 0.55rem 0.65rem; }
+  .clinic-grid { grid-template-columns: 1fr; }
+  .guide-grid { grid-template-columns: 1fr; }
+}
