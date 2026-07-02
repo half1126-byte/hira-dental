@@ -9,6 +9,7 @@
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { loadPartners, buildPartnerIndex } from './gen-partners.js';
 
 const __dir = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dir, '..');
@@ -19,6 +20,15 @@ const BASE_URL = 'https://half1126-byte.github.io/hira-dental';
 const SITE_NAME = 'HIRA 비급여 치과 데이터 허브';
 
 const LAW_HARD = ['최고', '1위', '최저가', '유일', '완치', '보장', '100%', '최상급', '명품', '무통'];
+
+// 거래처(제휴) 인덱스: "기관명|시도" → partner (모듈 로드 시 1회)
+const PARTNER_IDX = buildPartnerIndex(loadPartners());
+
+/** 해당 병원이 거래처면 프로필 URL 반환 */
+function partnerUrl(yadmNm, sidoNm) {
+  const p = PARTNER_IDX.get(`${String(yadmNm ?? '').trim()}|${sidoNm}`);
+  return p ? `${BASE_URL}/clinics/${p.id}/` : null;
+}
 
 // 지역 메타 (데이터 파일 + 영문 slug + 한국어 지역명)
 export const REGION_META = [
@@ -78,8 +88,9 @@ function formatPrice(amt) {
 }
 
 /** 병원 카드 HTML (아티클용 — 개별 상세 섹션) */
-function buildClinicSection(clinic, rank) {
+function buildClinicSection(clinic, rank, sidoNm) {
   const name = clinic.yadmNm ?? '이름 미상';
+  const pUrl = partnerUrl(name, sidoNm);
   const addr = clinic.addr ?? '';
   const tel = clinic.telno ?? '';
   const price = formatPrice(clinic.curAmt);
@@ -94,6 +105,7 @@ function buildClinicSection(clinic, rank) {
     <div class="clinic-meta-row">
       ${sggu ? `<span class="meta-tag">📍 ${sggu}</span>` : ''}
       <span class="meta-tag hira-tag">HIRA 공개 데이터</span>
+      ${pUrl ? `<a class="meta-tag partner-tag" href="${pUrl}">상세 프로필 →</a>` : ''}
     </div>
     <div class="price-highlight-box">
       <div class="ph-label">HIRA 비급여 신고 가격 (${item})</div>
@@ -109,17 +121,20 @@ function buildClinicSection(clinic, rank) {
 }
 
 /** 비교 표 HTML */
-function buildCompareTable(clinics) {
+function buildCompareTable(clinics, sidoNm) {
   if (!clinics.length) return '';
-  const rows = clinics.slice(0, 10).map((c, i) => `
+  const rows = clinics.slice(0, 10).map((c, i) => {
+    const pUrl = partnerUrl(c.yadmNm, sidoNm);
+    return `
     <tr>
       <td>${i + 1}</td>
-      <td>${c.yadmNm ?? ''}</td>
+      <td>${c.yadmNm ?? ''}${pUrl ? ` <a class="partner-tag-sm" href="${pUrl}">상세정보</a>` : ''}</td>
       <td>${c.sgguCdNm ?? ''}</td>
       <td class="price-cell">${formatPrice(c.curAmt)}</td>
       <td>${formatPrice(c.minAmt)}</td>
       <td>${formatPrice(c.maxAmt)}</td>
-    </tr>`).join('');
+    </tr>`;
+  }).join('');
 
   return `
   <table class="compare-table">
@@ -228,8 +243,8 @@ function buildArticleJsonLd(sgguNm, sidoNm, sidoEn, sgguSlug, clinics, buildDate
 function generateArticleHtml(clinics, sgguNm, sidoNm, sidoEn, sgguSlug, buildDate) {
   const { faqHtml, faqJsonLd } = buildFaq(sgguNm, sidoNm);
   const { breadcrumb, article, url, title } = buildArticleJsonLd(sgguNm, sidoNm, sidoEn, sgguSlug, clinics, buildDate);
-  const compareTable = buildCompareTable(clinics);
-  const clinicSections = clinics.slice(0, 8).map((c, i) => buildClinicSection(c, i + 1)).join('');
+  const compareTable = buildCompareTable(clinics, sidoNm);
+  const clinicSections = clinics.slice(0, 8).map((c, i) => buildClinicSection(c, i + 1, sidoNm)).join('');
   const avgPrice = clinics.length
     ? Math.round(clinics.reduce((s, c) => s + Number(c.curAmt || 0), 0) / clinics.filter(c => c.curAmt).length)
     : 0;
@@ -480,7 +495,7 @@ export function generateAllArticlesForSido(dataKey, sidoNm, sidoEn, buildDate, m
 }
 
 // --- 직접 실행 ---
-if (process.argv[1].endsWith('gen-articles.js')) {
+if (process.argv[1]?.endsWith('gen-articles.js')) {
   const BUILD_DATE = new Date().toISOString().slice(0, 10);
   mkdirSync(OUT_DIR, { recursive: true });
 

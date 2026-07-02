@@ -108,3 +108,21 @@
   .article-hero h1 { font-size: 1.35rem; }
   .ph-price { font-size: 1.2rem; }
 }
+
+/* ── 거래처(제휴) 프로필 ── */
+.partner-tag {
+  background: #eef4ff; color: #2554c7; border: 1px solid #c7d9ff;
+  border-radius: 999px; padding: 0.15rem 0.6rem; font-size: 0.75rem;
+  text-decoration: none; font-weight: 600;
+}
+.partner-tag:hover { background: #dce8ff; }
+.partner-tag-sm {
+  display: inline-block; margin-left: 0.35rem; padding: 0.05rem 0.45rem;
+  background: #eef4ff; color: #2554c7; border-radius: 999px;
+  font-size: 0.7rem; text-decoration: none; font-weight: 600;
+}
+.partner-badge { background: #2554c7; color: #fff; }
+.info-table th {
+  width: 7.5rem; text-align: left; background: #f7f9fc;
+  font-weight: 600; white-space: nowrap;
+}
