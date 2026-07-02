@@ -16,14 +16,12 @@
 import { readFileSync, writeFileSync, existsSync, readdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { XMLParser } from 'fast-xml-parser';
+import { searchHiraBasis, toHiraField } from './hira-lookup.js';
 
 const __dir = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dir, '..');
 const PARTNERS_FILE = join(ROOT, 'partners', 'partners.json');
 const DATA_DIR = join(ROOT, 'data');
-
-const SIDO2 = { 서울: '11', 부산: '21', 인천: '22', 대구: '23', 광주: '24', 대전: '25', 울산: '26', 경기: '31', 강원: '32', 충북: '33', 충남: '34', 전북: '35', 전남: '36', 경북: '37', 경남: '38', 제주: '39', 세종: '41' };
 
 function parseArgs(argv) {
   const args = {};
@@ -39,29 +37,11 @@ function parseArgs(argv) {
 
 /** HIRA 병원정보서비스에서 기관명 검색 */
 async function searchHira(name, sido) {
-  const KEY = process.env.HIRA_API_KEY;
-  if (!KEY) {
+  if (!process.env.HIRA_API_KEY) {
     console.warn('⚠ HIRA_API_KEY 없음 — API 조사 생략, 스켈레톤만 등록합니다.');
     return null;
   }
-  const params = new URLSearchParams({
-    yadmNm: name,
-    numOfRows: '10',
-    pageNo: '1',
-  });
-  if (SIDO2[sido]) params.set('sidoCd', SIDO2[sido]);
-
-  const url = `https://apis.data.go.kr/B551182/hospInfoServicev2/getHospBasisList?serviceKey=${KEY}&${params}`;
-  const res = await fetch(url, { signal: AbortSignal.timeout(15000) });
-  if (!res.ok) throw new Error(`HIRA API HTTP ${res.status}`);
-  const parser = new XMLParser({ ignoreAttributes: false });
-  const parsed = parser.parse(await res.text());
-  const raw = parsed?.response?.body?.items?.item;
-  if (!raw) return null;
-  const items = Array.isArray(raw) ? raw : [raw];
-  // 이름 정확 일치 우선, 없으면 첫 결과
-  const norm = s => String(s ?? '').replace(/\s/g, '');
-  return items.find(it => norm(it.yadmNm) === norm(name)) ?? items[0];
+  return searchHiraBasis(name, sido);
 }
 
 /** data/*.json에서 비급여 신고가 매칭 */
@@ -124,14 +104,7 @@ async function main() {
     prices: [],
     faq: [],
     contractStart: new Date().toISOString().slice(0, 10),
-    hira: hira ? {
-      ykiho: String(hira.ykiho ?? ''),
-      clCdNm: String(hira.clCdNm ?? ''),
-      lat: hira.YPos ? Number(hira.YPos) : undefined,
-      lng: hira.XPos ? Number(hira.XPos) : undefined,
-      estbDd: String(hira.estbDd ?? ''),
-      matchedAt: new Date().toISOString().slice(0, 10),
-    } : {},
+    hira: toHiraField(hira),
   };
 
   if (hira) {

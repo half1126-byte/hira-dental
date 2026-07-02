@@ -11,6 +11,7 @@ import { fetchImplantPrices, fetchDentalHospList, fetchNationwideStats, SIDO } f
 import { generateRegionPage, generateSitemap } from './gen-pages.js';
 import { generateAllArticlesForSido, REGION_META } from './gen-articles.js';
 import { generateAllPartnerPages } from './gen-partners.js';
+import { enrichPartners } from './enrich-partners.js';
 import { writeFileSync, mkdirSync } from 'node:fs';
 
 const __dir = dirname(fileURLToPath(import.meta.url));
@@ -109,6 +110,14 @@ async function main() {
     }
   }
   console.log(`\n  → 총 ${articlePages.length}개 아티클 생성`);
+
+  // 3.4 거래처 HIRA 자동 보강 (CI Secret 키 사용, 키 없으면 생략)
+  console.log('\n── 3.4단계: 거래처 HIRA 자동 보강 ──');
+  try {
+    await enrichPartners();
+  } catch (e) {
+    console.warn(`  ⚠ 거래처 보강 오류(계속 진행): ${e.message}`);
+  }
 
   // 3.5 거래처(제휴) 프로필 페이지 생성
   console.log('\n── 3.5단계: 거래처 프로필 생성 ──');

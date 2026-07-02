@@ -8,7 +8,8 @@
     "fetch": "node --env-file=.env.local scripts/fetch-hira.js",
     "dev": "node --env-file=.env.local scripts/build.js && npx serve .",
     "partner:add": "node --env-file=.env.local scripts/add-partner.js",
-    "partner:gen": "node scripts/gen-partners.js"
+    "partner:gen": "node scripts/gen-partners.js",
+    "partner:enrich": "node --env-file=.env.local scripts/enrich-partners.js"
   },
   "dependencies": {
     "fast-xml-parser": "^4.4.0"

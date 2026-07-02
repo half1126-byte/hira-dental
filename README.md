@@ -15,6 +15,8 @@ hira-dental/
 │   ├── gen-pages.js       # 지역별 비교 페이지 생성
 │   ├── gen-articles.js    # 시군구별 아티클 자동 생성 (65개)
 │   ├── add-partner.js     # 거래처 등록 CLI (HIRA API 자동 조사)
+│   ├── hira-lookup.js     # HIRA 병원정보 검색 공용 모듈
+│   ├── enrich-partners.js # 빌드 시 거래처 HIRA 자동 보강 (CI Secret 키)
 │   ├── gen-partners.js    # 거래처 프로필 페이지 생성
 │   └── build.js           # 빌드 오케스트레이터
 ├── partners/
@@ -52,6 +54,7 @@ npm run build
 ```
 
 - 프로필: 답변우선 요약, Dentist·FAQPage JSON-LD, HIRA 신고가 자동 병합, 기계가독 `clinic.json`
+- 로컬에 API 키가 없어도 됨: CI 빌드가 `HIRA_API_KEY` Secret으로 매일 거래처의 좌표·기관코드·주소를 자동 보강(3.4단계)
 - 계약 종료 시 `status: "paused"` → 다음 빌드에서 페이지 자동 제거
 - 의료광고법 금지어·제휴 고지 자동 검사 (위반 시 빌드 실패)
 
