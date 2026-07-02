@@ -74,6 +74,16 @@ node scripts/set-partner.js --list
 
 - 프로필: 답변우선 요약, Dentist·FAQPage JSON-LD, HIRA 신고가 자동 병합, 기계가독 `clinic.json`
 - 로컬에 API 키가 없어도 됨: CI 빌드가 `HIRA_API_KEY` Secret으로 매일 거래처의 좌표·기관코드·주소를 자동 보강(3.4단계)
+
+### 검색엔진·AI 노출 자동화
+
+| 항목 | 상태 |
+|------|------|
+| Bing·네이버 URL 제출 | ✅ 자동 — 매 배포 후 IndexNow로 전체 sitemap URL 통지 (`scripts/submit-indexnow.js`, 키 파일 `01641d...txt`) |
+| AI 인용 점검 | ✅ 자동 — 매주 월 KST 10:00 거래처별 질의 점검 → `reports/citations-*.md` 커밋 (`PERPLEXITY_API_KEY` Secret 등록 시 Perplexity 실질의, 없으면 체크리스트) |
+| Google Search Console | ⚠️ 최초 1회 소유 인증 + sitemap 등록만 수동 — 이후 매일 갱신 자동 반영 |
+| 네이버 서치어드바이저 | ⚠️ 최초 1회 소유 인증 (URL 제출 자체는 IndexNow가 대체) |
+| 거래처 상호 링크(sameAs) | 거래처 안내 사항 — GEO-PLAYBOOK 수칙 참고 |
 - 계약 종료 시 `status: "paused"` → 다음 빌드에서 페이지 자동 제거
 - 의료광고법 금지어·제휴 고지 자동 검사 (위반 시 빌드 실패)
 
