@@ -14,7 +14,12 @@ hira-dental/
 │   ├── fetch-hira.js      # HIRA API 호출 → data/*.json
 │   ├── gen-pages.js       # 지역별 비교 페이지 생성
 │   ├── gen-articles.js    # 시군구별 아티클 자동 생성 (65개)
+│   ├── add-partner.js     # 거래처 등록 CLI (HIRA API 자동 조사)
+│   ├── gen-partners.js    # 거래처 프로필 페이지 생성
 │   └── build.js           # 빌드 오케스트레이터
+├── partners/
+│   └── partners.json      # 거래처(제휴 치과) DB
+├── clinics/               # 거래처 프로필 (빌드 결과, HTML + clinic.json)
 ├── dental/                # 지역별 비교 페이지 (빌드 결과)
 │   ├── seoul-implant/
 │   ├── gyeonggi-implant/
@@ -22,12 +27,33 @@ hira-dental/
 │   └── incheon-implant/
 ├── articles/              # 시군구별 아티클 (빌드 결과, 65개)
 ├── data/                  # HIRA API 원본 JSON (빌드 시 생성, git 제외)
+├── docs/
+│   └── GEO-PLAYBOOK.md    # AI 인용(GEO/AEO) 규칙 + 거래처 운영 플로우
 ├── .github/workflows/
 │   └── build.yml          # 매일 KST 01:00 자동 빌드
 ├── index.html             # 메인 허브
 ├── style.css
 └── article.css
 ```
+
+## 거래처(제휴 치과) 시스템
+
+AI 검색(GPT·Gemini·Claude·Perplexity·Grok)에서 인용되는 거래처 프로필을 자동 생성한다.
+자세한 규칙·운영법은 [docs/GEO-PLAYBOOK.md](docs/GEO-PLAYBOOK.md) 참고.
+
+```bash
+# 1. 거래처 등록 (HIRA API에서 주소·전화·좌표 자동 조사 → status: paused)
+npm run partner:add -- --name "OO치과의원" --sido 서울 --id gangnam-oo-dental
+
+# 2. partners/partners.json에서 진료시간·가격·FAQ 보완 후 status를 "active"로 변경
+
+# 3. 빌드 → /clinics/<id>/ 프로필 생성 + 지역 아티클 65곳 자동 링크 + sitemap 등록
+npm run build
+```
+
+- 프로필: 답변우선 요약, Dentist·FAQPage JSON-LD, HIRA 신고가 자동 병합, 기계가독 `clinic.json`
+- 계약 종료 시 `status: "paused"` → 다음 빌드에서 페이지 자동 제거
+- 의료광고법 금지어·제휴 고지 자동 검사 (위반 시 빌드 실패)
 
 ## 데이터 소스
 
