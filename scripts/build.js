@@ -14,6 +14,7 @@ import { generateAllPartnerPages } from './gen-partners.js';
 import { enrichPartners } from './enrich-partners.js';
 import { generateAllFindPages } from './gen-find.js';
 import { generateLlmsTxt } from './gen-llms.js';
+import { generatePriceIndex } from './gen-index.js';
 import { writeFileSync, mkdirSync } from 'node:fs';
 
 const __dir = dirname(fileURLToPath(import.meta.url));
@@ -158,6 +159,16 @@ async function main() {
     process.exit(1);
   }
 
+  // 3.7 가격지수 (MIPI) 발행
+  console.log('\n── 3.7단계: 가격지수 발행 ──');
+  let indexPages = [];
+  try {
+    indexPages = generatePriceIndex(BUILD_DATE);
+  } catch (e) {
+    console.error(`  ✗ 가격지수 생성 실패: ${e.message}`);
+    process.exit(1);
+  }
+
   // 4. sitemap.xml 생성
   console.log('\n── 4단계: sitemap.xml 생성 ──');
   generateSitemap(
@@ -170,6 +181,7 @@ async function main() {
       ...articlePages,
       ...partnerPages,
       ...findPages,
+      ...indexPages,
     ],
     BUILD_DATE,
   );
@@ -179,7 +191,7 @@ async function main() {
   const { execSync } = await import('node:child_process');
   try {
     execSync(
-      'node -e "const{readdirSync,readFileSync}=require(\'fs\');const{join}=require(\'path\');function scan(d){try{for(const f of readdirSync(d,{withFileTypes:true})){if(f.isDirectory())scan(join(d,f.name));else if(f.name.endsWith(\'.html\')){const c=readFileSync(join(d,f.name),\'utf8\');const hits=[\'nO3sSSWe\',\'Gwwwwang94\'].filter(k=>c.includes(k));if(hits.length)throw new Error(\'SECRET LEAK: \'+join(d,f.name)+\' :: \'+hits.join(\',\'));}}}catch(e){if(e.code!==\'ENOENT\')throw e}};scan(\'dental\');scan(\'articles\');scan(\'clinics\');scan(\'find\')"',
+      'node -e "const{readdirSync,readFileSync}=require(\'fs\');const{join}=require(\'path\');function scan(d){try{for(const f of readdirSync(d,{withFileTypes:true})){if(f.isDirectory())scan(join(d,f.name));else if(f.name.endsWith(\'.html\')){const c=readFileSync(join(d,f.name),\'utf8\');const hits=[\'nO3sSSWe\',\'Gwwwwang94\'].filter(k=>c.includes(k));if(hits.length)throw new Error(\'SECRET LEAK: \'+join(d,f.name)+\' :: \'+hits.join(\',\'));}}}catch(e){if(e.code!==\'ENOENT\')throw e}};scan(\'dental\');scan(\'articles\');scan(\'clinics\');scan(\'find\');scan(\'price-index\')"',
       { cwd: ROOT, stdio: 'inherit' },
     );
     console.log('  ✓ 시크릿 스캔 통과');
