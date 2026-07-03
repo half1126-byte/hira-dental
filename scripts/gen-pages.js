@@ -316,6 +316,7 @@ function pageShell({ title, desc, canonicalPath, heroTitle, heroSub, body, build
   <div class="inner">
     <a class="logo" href="${BASE_URL}/">메디픽</a>
     <nav>
+      <a href="${BASE_URL}/price-index/">가격지수</a>
       <a href="${BASE_URL}/dental/">지역별 비교</a>
       <a href="${BASE_URL}/articles/">지역 아티클</a>
       <a href="${BASE_URL}/clinics/">치과 프로필</a>

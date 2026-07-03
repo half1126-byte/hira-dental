@@ -8,7 +8,7 @@ on:
   workflow_dispatch:        # 수동 실행 버튼
 
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
@@ -37,10 +37,23 @@ jobs:
         env:
           HIRA_API_KEY: ${{ secrets.HIRA_API_KEY }}
 
+      - name: 가격지수 스냅샷 커밋 (시계열 보존)
+        run: |
+          git config user.name "index-bot"
+          git config user.email "actions@github.com"
+          git add price-index/data/ price-index/index.html price-index/20* 2>/dev/null || true
+          if git diff --cached --quiet; then
+            echo "스냅샷 변경 없음"
+          else
+            git commit -m "data: 가격지수 스냅샷 갱신"
+            git pull --rebase origin main
+            git push origin main
+          fi
+
       - name: Prepare Pages output (_site)
         run: |
           mkdir -p _site
-          cp -r dental articles clinics find admin index.html style.css article.css robots.txt llms.txt sitemap.xml 01641d0d88be2025b555e6f89832ade7.txt _site/
+          cp -r dental articles clinics find price-index admin index.html style.css article.css robots.txt llms.txt sitemap.xml 01641d0d88be2025b555e6f89832ade7.txt _site/
 
       - name: Upload GitHub Pages artifact
         uses: actions/upload-pages-artifact@v3
