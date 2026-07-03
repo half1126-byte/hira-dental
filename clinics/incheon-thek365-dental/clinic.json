@@ -1,18 +1,18 @@
 {
   "@context": "https://schema.org",
   "@type": "Dentist",
-  "name": "트리움치과의원",
-  "url": "https://half1126-byte.github.io/hira-dental/clinics/gangdong-trium-dental/",
+  "name": "더케이365치과병원",
+  "url": "https://half1126-byte.github.io/hira-dental/clinics/incheon-thek365-dental/",
   "address": {
     "@type": "PostalAddress",
-    "streetAddress": "서울특별시 강동구 둔촌동 170-1 포레온스테이션5 3층 3070, 3092~94호",
-    "addressLocality": "서울 강동구",
+    "streetAddress": "인천광역시 계양구 장제로 794 동양빌딩 1~4층 (계산동)",
+    "addressLocality": "인천 계양구",
     "addressCountry": "KR"
   },
   "medicalSpecialty": "https://schema.org/Dentistry",
-  "telephone": "02-478-2233",
+  "telephone": "1555-3650",
   "sameAs": [
-    "http://triumdental.com"
+    "https://thek365.co.kr"
   ],
   "availableService": [
     {
@@ -21,19 +21,19 @@
     },
     {
       "@type": "MedicalProcedure",
+      "name": "치아교정"
+    },
+    {
+      "@type": "MedicalProcedure",
+      "name": "보철"
+    },
+    {
+      "@type": "MedicalProcedure",
       "name": "충치·신경치료"
     },
     {
       "@type": "MedicalProcedure",
-      "name": "치주치료"
-    },
-    {
-      "@type": "MedicalProcedure",
-      "name": "심미보철"
-    },
-    {
-      "@type": "MedicalProcedure",
-      "name": "소아치료"
+      "name": "사랑니 발치"
     }
   ],
   "additionalProperty": {
@@ -41,12 +41,12 @@
     "disclosure": "본 프로필은 해당 의료기관이 제공·확인한 자료와 건강보험심사평가원(HIRA) 공개 데이터를 기반으로 작성되었으며, 게재에 경제적 대가가 포함될 수 있습니다. 치료 효과를 보증하거나 특정 의료기관의 우월성을 주장하지 않습니다.",
     "hiraReportedPrices": [],
     "providedPrices": [],
-    "hours": "평일 야간진료 운영 · 주말/공휴일 진료(점심시간 없이) — 정확한 요일별 시간은 전화 확인",
+    "hours": "365일 진료 — 일요일·공휴일 포함, 주 3일 야간진료 운영 (예: 월 09:30–20:30, 점심 13:00–14:00) · 정확한 요일별 시간은 전화 확인",
     "features": [
-      "치과보존과·치주과·치과교정과 전문의 및 통합치의학과 전문의 자격 보유 원장 3인 진료 (홈페이지 안내 기준)",
-      "평일 야간진료·주말/공휴일 진료 운영 (홈페이지 안내 기준)",
-      "보존적 치료 중심 진료 방침",
-      "의식하진정 치과치료, 턱관절·수면무호흡 진료 제공"
+      "연중무휴 365일 진료 — 일요일·공휴일에도 진료 (홈페이지 안내 기준)",
+      "주 3일 야간진료 운영",
+      "분과별 전문의 11인 협진 체계의 병원급 치과 (홈페이지 안내 기준)",
+      "인천 계양구 소재 — 계양·부평·부천 인접 생활권"
     ]
   }
 }
