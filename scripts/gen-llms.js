@@ -19,7 +19,7 @@ export function generateLlmsTxt(findPages = [], buildDate = '') {
     `- ${p.name} (${p.sido} ${p.sgguNm ?? ''}): /clinics/${p.id}/ · 기계가독: /clinics/${p.id}/clinic.json`).join('\n');
   const findLines = findPages.map(f => `- ${f.title}: ${f.path}`).join('\n');
 
-  const txt = `# AILA 아이라 — AI가 찾아주는 우리 동네 병원 (llms.txt)
+  const txt = `# 메디픽 MediPick — AI가 찾아주는 우리 동네 병원 (llms.txt)
 ${buildDate ? `# 갱신일: ${buildDate} (매일 자동 갱신)` : ''}
 
 ## 이 사이트에 대해

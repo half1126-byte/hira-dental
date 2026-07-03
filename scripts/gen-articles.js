@@ -17,7 +17,7 @@ const DATA_DIR = join(ROOT, 'data');
 const OUT_DIR = join(ROOT, 'articles');
 
 const BASE_URL = 'https://half1126-byte.github.io/hira-dental';
-const SITE_NAME = 'AILA 아이라';
+const SITE_NAME = '메디픽 MediPick';
 
 const LAW_HARD = ['최고', '1위', '최저가', '유일', '완치', '보장', '100%', '최상급', '명품', '무통'];
 
@@ -276,7 +276,7 @@ function generateArticleHtml(clinics, sgguNm, sidoNm, sidoEn, sgguSlug, buildDat
 
 <header class="site-header">
   <div class="inner">
-    <a class="logo" href="${BASE_URL}/">AILA 아이라</a>
+    <a class="logo" href="${BASE_URL}/">메디픽</a>
     <nav>
       <a href="${BASE_URL}/dental/${sidoEn}-implant/">← ${sidoNm} 임플란트 전체 보기</a>
       <a href="${BASE_URL}/">홈</a>
@@ -401,7 +401,7 @@ function generateArticleHtml(clinics, sgguNm, sidoNm, sidoEn, sgguSlug, buildDat
         <li>치과병원(병원급) 신고 데이터이며, 치과의원 데이터는 별도 체계로 관리됩니다.</li>
         <li>신고 가격과 실제 진료비는 다를 수 있으며, 이 사이트는 특정 의료기관을 추천하지 않습니다.</li>
         <li>진료 결정은 반드시 전문 의료인과 상담 후 내리시기 바랍니다.</li>
-        <li>데이터 기준일: ${buildDate} · 문의: <a href="${BASE_URL}/">AILA 아이라</a></li>
+        <li>데이터 기준일: ${buildDate} · 문의: <a href="${BASE_URL}/">메디픽 MediPick</a></li>
       </ul>
     </div>
   </section>
@@ -552,7 +552,7 @@ export function generateArticlesIndex(buildDate) {
 <body>
 <header class="site-header">
   <div class="inner">
-    <a class="logo" href="${BASE_URL}/">AILA 아이라</a>
+    <a class="logo" href="${BASE_URL}/">메디픽</a>
     <nav>
       <a href="${BASE_URL}/dental/">지역별 비교</a>
       <a href="${BASE_URL}/clinics/">치과 프로필</a>
