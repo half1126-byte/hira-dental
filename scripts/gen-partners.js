@@ -448,7 +448,7 @@ export function generateAllPartnerPages(buildDate, includeExamples = false) {
 
 // --- 직접 실행: node scripts/gen-partners.js [--include-examples] ---
 if (process.argv[1]?.endsWith('gen-partners.js')) {
-  const BUILD_DATE = new Date().toISOString().slice(0, 10);
+  const BUILD_DATE = new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(0, 10);
   const inc = process.argv.includes('--include-examples');
   const pages = generateAllPartnerPages(BUILD_DATE, inc);
   console.log(`\n✅ 거래처 페이지 ${pages.length - 1}건 + 목록 1건 생성 완료`);

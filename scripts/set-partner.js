@@ -65,7 +65,7 @@ if (args.remove) {
   }
   const prev = p.status;
   p.status = args.status;
-  if (args.status === 'paused') p.contractEnd = new Date().toISOString().slice(0, 10);
+  if (args.status === 'paused') p.contractEnd = new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(0, 10);
   else delete p.contractEnd;
   console.log(`✅ ${p.name}: ${prev} → ${args.status}${args.status === 'paused' ? ' (해지일 기록, 다음 빌드에서 페이지 제거)' : ''}`);
 } else {
@@ -73,5 +73,5 @@ if (args.remove) {
   process.exit(1);
 }
 
-db.updatedAt = new Date().toISOString().slice(0, 10);
+db.updatedAt = new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(0, 10);
 writeFileSync(PARTNERS_FILE, JSON.stringify(db, null, 2) + '\n', 'utf8');

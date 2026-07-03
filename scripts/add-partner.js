@@ -127,7 +127,7 @@ async function main() {
     features: [],
     prices: [],
     faq: [],
-    contractStart: new Date().toISOString().slice(0, 10),
+    contractStart: new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(0, 10),
     hira: toHiraField(hira),
   };
 
@@ -143,7 +143,7 @@ async function main() {
   }
 
   db.partners.push(partner);
-  db.updatedAt = new Date().toISOString().slice(0, 10);
+  db.updatedAt = new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(0, 10);
   writeFileSync(PARTNERS_FILE, JSON.stringify(db, null, 2) + '\n', 'utf8');
 
   console.log(`\n✅ partners/partners.json 등록 완료 (id: ${args.id}, status: ${status})`);

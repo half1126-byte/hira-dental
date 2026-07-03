@@ -17,7 +17,7 @@ import { fileURLToPath } from 'node:url';
 const __dir = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dir, '..');
 const SITE_DOMAIN = 'half1126-byte.github.io';
-const TODAY = new Date().toISOString().slice(0, 10);
+const TODAY = new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(0, 10);
 
 /** 거래처 + 사이트 공통 타깃 질의 생성 */
 function buildQueries() {

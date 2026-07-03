@@ -20,7 +20,8 @@ const __dir = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dir, '..');
 const DATA = join(ROOT, 'data');
 
-const BUILD_DATE = new Date().toISOString().slice(0, 10);
+// KST 기준 날짜 (CI는 UTC로 돌므로 +9h 보정 — 새벽 1시 빌드 시 '어제' 표기 방지)
+const BUILD_DATE = new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(0, 10);
 
 // 생성할 지역 목록 (한국어명, 영문 slug)
 const REGIONS = [

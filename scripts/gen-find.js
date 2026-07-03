@@ -240,6 +240,6 @@ export function generateAllFindPages(buildDate) {
 
 // --- 직접 실행 ---
 if (process.argv[1]?.endsWith('gen-find.js')) {
-  const pages = generateAllFindPages(new Date().toISOString().slice(0, 10));
+  const pages = generateAllFindPages(new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(0, 10));
   console.log(`\n✅ ${pages.length}건 완료`);
 }

@@ -41,6 +41,6 @@ export function toHiraField(item) {
     lat: item.YPos ? Number(item.YPos) : undefined,
     lng: item.XPos ? Number(item.XPos) : undefined,
     estbDd: String(item.estbDd ?? ''),
-    matchedAt: new Date().toISOString().slice(0, 10),
+    matchedAt: new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(0, 10),
   };
 }
