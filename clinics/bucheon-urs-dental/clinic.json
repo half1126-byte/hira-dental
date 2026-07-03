@@ -5,11 +5,12 @@
   "url": "https://half1126-byte.github.io/hira-dental/clinics/bucheon-urs-dental/",
   "address": {
     "@type": "PostalAddress",
-    "streetAddress": "경기도 부천시 원미구 중동 (부천시청역 도보권) — 상세 주소는 네이버 플레이스 참조",
+    "streetAddress": "경기도 부천시 원미구 석천로169번길 30 새롬프라자 303호 (중동)",
     "addressLocality": "경기 부천원미구",
     "addressCountry": "KR"
   },
   "medicalSpecialty": "https://schema.org/Dentistry",
+  "telephone": "032-328-2888",
   "sameAs": [
     "https://ursdental.kr",
     "https://map.naver.com/p/entry/place/1725412707",
@@ -38,12 +39,14 @@
     "disclosure": "본 프로필은 해당 의료기관이 제공·확인한 자료와 건강보험심사평가원(HIRA) 공개 데이터를 기반으로 작성되었으며, 게재에 경제적 대가가 포함될 수 있습니다. 치료 효과를 보증하거나 특정 의료기관의 우월성을 주장하지 않습니다.",
     "hiraReportedPrices": [],
     "providedPrices": [],
-    "hours": "평일 10:00–19:00 · 수요일 야간진료(20:30까지) · 토 10:00–14:00 · 일/공휴일 휴진 — 방문 전 전화 확인 권장",
+    "hours": "월·화·목·금 10:00–19:00 · 수 10:00–20:30(야간진료) · 토 10:00–14:00(점심시간 없이 진료) · 점심 13:00–14:00 · 일/공휴일 휴진",
     "features": [
-      "부천시청역 도보권 — 부천 중동 생활권 (홈페이지 안내 기준)",
+      "7호선 부천시청역 3번 출구 도보 5분 — 부천 중동 생활권",
       "수요일 야간진료(20:30까지) — 직장인 퇴근 후 진료 가능",
+      "토요일 점심시간 없이 진료",
       "통합치의학과 전문의(대표원장) 진료",
-      "콘빔CT(CBCT) 보유 — 정밀 진단 장비"
+      "콘빔CT(CBCT) 보유 — 정밀 진단 장비",
+      "버스: 포도마을사거리(현대백화점·이마트) 하차 — 5, 8, 12-1, 19, 23, 50-1, 37, 80, 87"
     ]
   }
 }
