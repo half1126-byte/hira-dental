@@ -314,7 +314,7 @@ function pageShell({ title, desc, canonicalPath, heroTitle, heroSub, body, build
 <body>
 <header class="site-header">
   <div class="inner">
-    <a class="logo" href="${BASE_URL}/">HIRA 치과 데이터 허브</a>
+    <a class="logo" href="${BASE_URL}/">메디픽</a>
     <nav>
       <a href="${BASE_URL}/dental/">지역별 비교</a>
       <a href="${BASE_URL}/articles/">지역 아티클</a>

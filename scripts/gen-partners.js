@@ -25,7 +25,7 @@ const OUT_DIR = join(ROOT, 'clinics');
 const PARTNERS_FILE = join(ROOT, 'partners', 'partners.json');
 
 const BASE_URL = 'https://half1126-byte.github.io/hira-dental';
-const SITE_NAME = 'HIRA 비급여 치과 데이터 허브';
+const SITE_NAME = '메디픽 MediPick';
 
 const LAW_HARD = ['최고', '1위', '최저가', '유일', '완치', '보장', '100%', '최상급', '명품', '무통'];
 
@@ -228,7 +228,7 @@ function generatePartnerHtml(p, buildDate) {
 
 <header class="site-header">
   <div class="inner">
-    <a class="logo" href="${BASE_URL}/">HIRA 치과 데이터 허브</a>
+    <a class="logo" href="${BASE_URL}/">메디픽</a>
     <nav>
       <a href="${BASE_URL}/clinics/">치과 프로필</a>
       <a href="${BASE_URL}/">홈</a>
@@ -386,7 +386,7 @@ function generateIndexHtml(partners, buildDate) {
 <body>
 <header class="site-header">
   <div class="inner">
-    <a class="logo" href="${BASE_URL}/">HIRA 치과 데이터 허브</a>
+    <a class="logo" href="${BASE_URL}/">메디픽</a>
     <nav><a href="${BASE_URL}/">홈</a></nav>
   </div>
 </header>
