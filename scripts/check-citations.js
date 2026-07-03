@@ -38,6 +38,11 @@ function buildQueries() {
       if (/야간/.test(t)) queries.push({ q: `${p.sgguNm} 야간진료 치과`, target: '니즈별 찾기 페이지' });
       if (/365일/.test(t) || (/(일요일|공휴일|주말)[^·\n]*진료/.test(t) && !/휴진/.test(t)))
         queries.push({ q: `${p.sgguNm} 일요일 진료 치과`, target: '니즈별 찾기 페이지' });
+      const st = `${(p.specialties ?? []).join(' ')} ${(p.features ?? []).join(' ')}`;
+      if (/소아/.test(st)) queries.push({ q: `${p.sgguNm} 소아 진료 치과`, target: '니즈별 찾기 페이지 (소아)' });
+      if (/의식하진정|수면치료|진정치료/.test(st)) queries.push({ q: `${p.sgguNm} 수면치료 되는 치과`, target: '니즈별 찾기 페이지 (진정치료)' });
+      for (const a of p.areas ?? [])
+        queries.push({ q: `${a.label} 치과 ${a.type === 'station' ? '근처 ' : ''}추천`, target: `동·역세권 페이지 (${a.label})` });
     }
   }
   return queries;
