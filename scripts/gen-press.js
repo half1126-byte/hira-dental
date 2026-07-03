@@ -1,0 +1,157 @@
+/**
+ * gen-press.js
+ * 가격지수(MIPI) 월간 보도자료 초안 자동 생성
+ *
+ * price-index/data/latest.json → press/보도자료-YYYY-MM.md
+ * 대표 코멘트·연락처 등 [대괄호] 부분만 채워서 뉴스와이어 등에 그대로 배포하면 된다.
+ * 특정 의료기관을 언급하지 않는 공공데이터 통계 발표이므로 의료광고에 해당하지 않으나,
+ * 순위·과장 표현 없이 사실 수치만 서술한다.
+ *
+ * 실행: node scripts/gen-press.js
+ */
+
+import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const __dir = dirname(fileURLToPath(import.meta.url));
+const ROOT = join(__dir, '..');
+const BASE_URL = 'https://half1126-byte.github.io/hira-dental';
+
+const won = n => `${Math.round(n / 10000)}만원`;
+const comma = n => Number(n).toLocaleString('ko-KR');
+
+export function generatePressRelease() {
+  const latestFile = join(ROOT, 'price-index', 'data', 'latest.json');
+  if (!existsSync(latestFile)) {
+    console.warn('  ⚠ price-index/data/latest.json 없음 — 보도자료 생성 생략');
+    return null;
+  }
+  const idx = JSON.parse(readFileSync(latestFile, 'utf8'));
+  const rs = idx.regions ?? [];
+  if (!rs.length) return null;
+
+  const totalCount = rs.reduce((s, r) => s + r.count, 0);
+  const sorted = [...rs].sort((a, b) => b.median - a.median);
+  const top = sorted[0];
+  const bottom = sorted[sorted.length - 1];
+  // 동률 처리: 같은 중앙값 지역은 묶어서 표기 ("부산·인천")
+  const topNames = sorted.filter(r => r.median === top.median).map(r => r.region).join('·');
+  const bottomNames = sorted.filter(r => r.median === bottom.median).map(r => r.region).join('·');
+  const gapPct = Math.round(((top.median - bottom.median) / bottom.median) * 100);
+  // 지역 내 신고가 편차가 가장 큰 지역 (배수)
+  const widest = [...rs].sort((a, b) => (b.max / b.min) - (a.max / a.min))[0];
+  const widestX = (widest.max / widest.min).toFixed(1);
+
+  // 전월 대비 (스냅샷 있으면)
+  const [y, m] = idx.month.split('-').map(Number);
+  const prevMonth = `${m === 1 ? y - 1 : y}-${String(m === 1 ? 12 : m - 1).padStart(2, '0')}`;
+  const prevFile = join(ROOT, 'price-index', 'data', `${prevMonth}.json`);
+  let momLine = '';
+  if (existsSync(prevFile)) {
+    try {
+      const prev = JSON.parse(readFileSync(prevFile, 'utf8'));
+      const deltas = rs.map(r => {
+        const p = (prev.regions ?? []).find(x => x.region === r.region);
+        if (!p?.median) return null;
+        const d = r.median - p.median;
+        return `${r.region} ${d === 0 ? '보합' : `${d > 0 ? '+' : ''}${won(Math.abs(d)) === '0만원' ? comma(d) + '원' : (d > 0 ? '' : '-') + won(Math.abs(d))}`}`;
+      }).filter(Boolean);
+      if (deltas.length) momLine = `\n전월(${prevMonth}) 대비 중앙값 변동은 ${deltas.join(', ')}이다.`;
+    } catch { /* skip */ }
+  }
+
+  const table = rs.map(r =>
+    `| ${r.region} | ${comma(r.median)}원 | ${comma(r.mean)}원 | ${comma(r.min)}원 ~ ${comma(r.max)}원 | ${r.count}곳 |`).join('\n');
+
+  const md = `# [보도자료] ${idx.month} 메디픽 임플란트 가격지수 발표
+<!-- 발송 전 [대괄호] 항목을 채우세요. 하단 '배포 가이드' 섹션은 발송 원고에서 삭제. -->
+
+**보도자료 · 즉시 배포 가능**
+배포일: [YYYY-MM-DD] · 문의: 메디픽 MediPick [담당자명] · [이메일] · [전화]
+
+---
+
+## ${top.region} 임플란트 중앙값 ${won(top.median)}… 같은 ${widest.region} 안에서도 신고가 ${widestX}배 차이
+
+### 메디픽, 심평원 공공데이터 기반 '임플란트 가격지수' ${idx.month}호 발표 — ${rs.length}개 시도 ${totalCount}개 치과병원 분석
+
+AI 병원 검색 서비스 메디픽(MediPick)은 건강보험심사평가원(HIRA) 비급여진료비 공개
+데이터를 분석한 '메디픽 임플란트 가격지수' ${idx.month}호를 발표했다.
+
+이번 조사는 ${rs.map(r => r.region).join('·')} 소재 치과병원 ${totalCount}곳이 심평원에 신고한
+임플란트(치과임플란트-지르코니아 등 비급여) 가격을 집계한 것으로, 지역별 중앙값 기준
+${topNames}이 ${comma(top.median)}원으로 가장 높았고 ${bottomNames}이 ${comma(bottom.median)}원으로
+가장 낮아 지역 간 ${gapPct}%의 차이를 보였다.${momLine}
+
+특히 같은 지역 안에서도 기관별 신고가 격차가 컸다. ${widest.region}의 경우 가장 낮은
+신고가는 ${comma(widest.min)}원, 가장 높은 신고가는 ${comma(widest.max)}원으로 약 ${widestX}배
+차이가 났다. 동일한 시술이라도 사용 재료(픽스처·보철 종류), 뼈이식 포함 여부 등에 따라
+가격이 크게 달라지는 만큼, 소비자가 사전에 신고 가격을 비교해볼 필요가 있다는 의미다.
+
+### ${idx.month} 지역별 임플란트 신고가 (병원급 치과)
+
+| 지역 | 중앙값 | 평균 | 신고가 범위 | 분석 기관 수 |
+|------|--------|------|------------|-------------|
+${table}
+
+※ 출처: 건강보험심사평가원 비급여진료비 공개 데이터 (${idx.updatedAt} 수집) · 병원급(치과병원) 신고 기준
+※ 실제 진료비는 환자 상태, 사용 재료, 추가 시술 여부에 따라 신고가와 다를 수 있음
+
+메디픽 관계자는 "[예시: 임플란트는 건강보험이 적용되지 않는 대표적 비급여 시술이라
+소비자가 가격을 비교할 수단이 마땅치 않았다. 심평원에 신고된 공식 데이터를 매달
+지수화해 누구나 쉽게 확인할 수 있게 하려는 취지다]"라고 말했다.
+
+가격지수는 매월 초 갱신되며, 지역별 상세 수치와 산출 방법론, 월별 아카이브는
+메디픽 가격지수 페이지(${BASE_URL}/price-index/)에서 무료로 확인할 수 있다.
+기계가독 데이터(JSON)도 함께 공개해 연구·언론 등 2차 활용이 가능하다.
+
+**메디픽(MediPick) 소개**
+메디픽은 "AI가 찾아주는 우리 동네 병원"을 표방하는 의료 정보 서비스로, 건강보험심사평가원
+공공데이터를 기반으로 치과 비급여 가격 비교, 지역·니즈별 병원 찾기, 월간 가격지수를
+제공한다. ChatGPT·Perplexity 등 AI 검색 서비스가 인용할 수 있는 개방형 구조로 운영된다.
+
+- 서비스: ${BASE_URL}/
+- 가격지수: ${BASE_URL}/price-index/ (인용 표기: "메디픽 임플란트 가격지수 (${idx.month}), 메디픽 MediPick")
+
+---
+---
+
+## 배포 가이드 (발송 원고에서 이 섹션은 삭제)
+
+**1) 어디로 보내나 — 우선순위 순**
+
+| 채널 | 방법 | 비용 | 비고 |
+|------|------|------|------|
+| 뉴스와이어 newswire.co.kr | 회원가입 → 보도자료 등록 | 건당 유료(등급별 상이) | 스키마 마크업 지원 — LLM 인용에 유리. 언론사 배포망 보유 |
+| 치과 전문지 (치의신보, 데일리덴탈, 덴탈아리랑) | 편집국 이메일로 직접 발송 | 무료 | 업계 매체라 채택률 높음 |
+| 경제지 헬스케어 담당 기자 | 매경·한경·서울경제 등 기사 하단 기자 이메일로 발송 | 무료 | 한국 LLM 인용 1순위 매체군 (docs/AI검색-인사이트.md) |
+| 보건의료 전문지 (메디게이트뉴스, 청년의사, 라포르시안) | 제보 이메일 | 무료 | 데이터 기사 선호 |
+
+**2) 이메일 발송 요령**
+- 제목: "[보도자료] ${idx.month} 임플란트 가격지수 — ${top.region} 중앙값 ${won(top.median)}, 같은 지역 내 ${widestX}배 격차"
+- 본문에 원고 전문 붙여넣기 + 표 이미지는 선택. 첨부파일보다 본문 붙여넣기가 채택률 높음
+- 발송 시점: 화~목 오전 9~10시
+- 월 1회, 매월 첫 주에 정기 발송 → "매달 나오는 지수"라는 인식이 쌓이면 기자가 먼저 찾음
+
+**3) 법적 체크 (이미 반영됨)**
+- 특정 의료기관명 미언급 — 의료광고 아님, 공공데이터 통계 발표
+- 순위·과장 표현 없음, 출처·기준일 명시, "실제 진료비는 다를 수 있음" 고지 포함
+
+**4) 다음 달부터**
+- 매월 빌드 후 \`node scripts/gen-press.js\` 실행(또는 자동 생성된 press/ 최신 파일 사용)
+- 전월 스냅샷이 쌓이면 "전월 대비 ○○ 상승/하락" 문장이 자동 포함되어 뉴스가치 상승
+`;
+
+  const outDir = join(ROOT, 'press');
+  mkdirSync(outDir, { recursive: true });
+  const outFile = join(outDir, `보도자료-${idx.month}.md`);
+  writeFileSync(outFile, md, 'utf8');
+  console.log(`  ✓ press/보도자료-${idx.month}.md 생성 (${rs.length}개 지역, ${totalCount}개 기관)`);
+  return outFile;
+}
+
+// --- 직접 실행 ---
+if (process.argv[1]?.endsWith('gen-press.js')) {
+  generatePressRelease();
+}
