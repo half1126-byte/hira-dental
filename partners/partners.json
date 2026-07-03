@@ -157,7 +157,25 @@
       ],
       "contractStart": "2026-07-03",
       "hira": {},
-      "notes": "출처: thek365.co.kr, goodoc, modoodoc (2026-07-03 웹 조사). 병원급(치과병원)이라 HIRA 비급여 신고 대상 — CI 빌드에서 자동 매칭 시도. 제휴 계약 확정 전 테스트 등록."
+      "notes": "출처: thek365.co.kr, goodoc, modoodoc (2026-07-03 웹 조사). 병원급(치과병원)이라 HIRA 비급여 신고 대상 — CI 빌드에서 자동 매칭 시도. 제휴 계약 확정 전 테스트 등록.",
+      "links": [
+        {
+          "label": "네이버 플레이스",
+          "url": "https://map.naver.com/p/entry/place/1966350660"
+        },
+        {
+          "label": "모두닥 (비급여 가격)",
+          "url": "https://www.modoodoc.com/hospital/81041/"
+        },
+        {
+          "label": "네이버 블로그 후기",
+          "url": "https://blog.naver.com/galaxy_ny/223436585144"
+        },
+        {
+          "label": "Threads",
+          "url": "https://www.threads.com/@miri_dds/post/DF5HAEXP6Hu"
+        }
+      ]
     }
   ]
 }
