@@ -172,6 +172,14 @@ async function main() {
     process.exit(1);
   }
 
+  // 3.8 월간 보도자료 초안 (지수 데이터 기반, 실패해도 빌드는 계속)
+  try {
+    const { generatePressRelease } = await import('./gen-press.js');
+    generatePressRelease();
+  } catch (e) {
+    console.warn(`  ⚠ 보도자료 초안 생성 오류(계속 진행): ${e.message}`);
+  }
+
   // 4. sitemap.xml 생성
   console.log('\n── 4단계: sitemap.xml 생성 ──');
   generateSitemap(
