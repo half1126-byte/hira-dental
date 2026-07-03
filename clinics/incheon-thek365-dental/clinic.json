@@ -12,7 +12,11 @@
   "medicalSpecialty": "https://schema.org/Dentistry",
   "telephone": "1555-3650",
   "sameAs": [
-    "https://thek365.co.kr"
+    "https://thek365.co.kr",
+    "https://map.naver.com/p/entry/place/1966350660",
+    "https://www.modoodoc.com/hospital/81041/",
+    "https://blog.naver.com/galaxy_ny/223436585144",
+    "https://www.threads.com/@miri_dds/post/DF5HAEXP6Hu"
   ],
   "availableService": [
     {

@@ -98,7 +98,9 @@ function buildDentistJsonLd(p, url) {
     medicalSpecialty: 'https://schema.org/Dentistry',
   };
   if (p.tel) ld.telephone = p.tel;
-  if (p.homepage) ld.sameAs = [p.homepage];
+  // sameAs: 홈페이지 + 외부 채널(네이버 플레이스·블로그·SNS 등) — AI 교차 검증 신호
+  const sameAs = [p.homepage, ...(p.links ?? []).map(l => l.url)].filter(Boolean);
+  if (sameAs.length) ld.sameAs = sameAs;
   if (p.hira?.lat && p.hira?.lng) {
     ld.geo = { '@type': 'GeoCoordinates', latitude: p.hira.lat, longitude: p.hira.lng };
   }
@@ -263,6 +265,7 @@ function generatePartnerHtml(p, buildDate) {
         ${p.equipment?.length ? `<tr><th>보유 장비</th><td>${esc(p.equipment.join(', '))}</td></tr>` : ''}
         ${p.doctors?.length ? `<tr><th>의료진</th><td>${esc(p.doctors.map(d => `${d.name}${d.title ? ` (${d.title})` : ''}`).join(', '))}</td></tr>` : ''}
         ${p.homepage ? `<tr><th>홈페이지</th><td><a href="${esc(p.homepage)}" rel="noopener" target="_blank">${esc(p.homepage)}</a></td></tr>` : ''}
+        ${p.links?.length ? `<tr><th>외부 채널</th><td>${p.links.map(l => `<a href="${esc(l.url)}" rel="noopener nofollow" target="_blank">${esc(l.label)}</a>`).join(' · ')}</td></tr>` : ''}
       </tbody>
     </table>
   </section>
