@@ -502,7 +502,7 @@ export function generateAllArticlesForSido(dataKey, sidoNm, sidoEn, buildDate, m
 
 // --- 직접 실행 ---
 if (process.argv[1]?.endsWith('gen-articles.js')) {
-  const BUILD_DATE = new Date().toISOString().slice(0, 10);
+  const BUILD_DATE = new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(0, 10);
   mkdirSync(OUT_DIR, { recursive: true });
 
   let totalArticles = 0;
