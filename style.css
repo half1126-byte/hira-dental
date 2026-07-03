@@ -1,29 +1,28 @@
-/* hira-dental/style.css — 라이트 클리니컬 디자인 시스템 v2
-   기존 클래스·변수명 유지, 값·컴포넌트 재설계 (관리자·가이드 페이지와 통일) */
+/* hira-dental/style.css — Dala-inspired dark system v3
+   순수 블랙 캔버스 · 단일 바이올렛 액센트 · 헤어라인 보더 · 필 컨트롤
+   그림자/그라디언트 없이 대비와 여백으로 깊이 표현. 기존 클래스·변수명 유지. */
 
 :root {
-  /* 배경·표면 */
-  --bg-1: #f5f8f9;
-  --bg-2: #ecf3f5;
-  --bg-3: #f0f5f6;
-  --surface: #ffffff;
-  --border: #dfe9ec;
-  /* 브랜드 (구 변수명 유지 — 값만 교체) */
-  --plum: #0c7a8d;          /* primary: deep clinical teal */
-  --plum-light: #0a6d7e;    /* 링크·강조 텍스트 */
-  --gold: #b25309;          /* 가격 강조 (warm amber) */
-  --teal: #0f766e;          /* 보조 포인트 */
-  --red: #bb3d3d;
-  /* 텍스트 */
-  --text-1: #132b34;
-  --text-2: #405b65;
-  --text-3: #67808a;
+  /* 캔버스·표면 */
+  --bg-1: #000000;
+  --bg-2: #050507;
+  --bg-3: #0b0b0f;
+  --surface: #0a0a0e;
+  --border: rgba(255, 255, 255, 0.09);
+  /* 단일 액센트: 채도 높은 바이올렛 (구 변수명 유지) */
+  --plum: #8b5cf6;
+  --plum-light: #a78bfa;
+  --gold: #a78bfa;          /* 가격 강조도 액센트 계열로 통일 (단일 색 원칙) */
+  --teal: #a78bfa;
+  --red: #f87171;
+  /* 타이포 — 블랙 위에서 빛나는 화이트 */
+  --text-1: #ffffff;
+  --text-2: rgba(255, 255, 255, 0.66);
+  --text-3: rgba(255, 255, 255, 0.42);
   --font: 'Pretendard', 'Apple SD Gothic Neo', -apple-system, BlinkMacSystemFont, 'Malgun Gothic', sans-serif;
-  --radius: 14px;
-  --radius-sm: 9px;
+  --radius: 12px;
+  --radius-sm: 8px;
   --max-w: 1100px;
-  --shadow-1: 0 1px 2px rgba(19, 43, 52, 0.05), 0 1px 6px rgba(19, 43, 52, 0.04);
-  --shadow-2: 0 4px 14px rgba(19, 43, 52, 0.09);
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -38,269 +37,268 @@ body {
   font-family: var(--font);
   background: var(--bg-1);
   color: var(--text-1);
-  line-height: 1.7;
+  line-height: 1.75;
+  letter-spacing: 0.01em; /* 본문: 블랙 위 가독성 위해 살짝 양수 트래킹 */
   -webkit-font-smoothing: antialiased;
 }
 
 a { color: var(--plum-light); text-decoration: none; }
-a:hover { color: var(--plum); text-decoration: underline; text-underline-offset: 3px; }
-:focus-visible { outline: 2px solid var(--plum); outline-offset: 2px; border-radius: 4px; }
+a:hover { color: #ffffff; }
+:focus-visible { outline: 1.5px solid var(--plum); outline-offset: 3px; border-radius: 4px; }
+
+::selection { background: rgba(139, 92, 246, 0.35); }
 
 /* ── 레이아웃 ── */
-.inner { max-width: var(--max-w); margin: 0 auto; padding: 0 1.25rem; }
+.inner { max-width: var(--max-w); margin: 0 auto; padding: 0 1.5rem; }
 
-/* ── 헤더 ── */
+/* ── 헤더: 블랙 위 헤어라인 ── */
 .site-header {
   position: sticky; top: 0; z-index: 100;
-  background: rgba(255, 255, 255, 0.88);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: rgba(0, 0, 0, 0.82);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
   border-bottom: 1px solid var(--border);
-  padding: 0.85rem 0;
+  padding: 1rem 0;
 }
 .site-header .inner {
   display: flex; align-items: center; justify-content: space-between; gap: 0.75rem;
 }
 .site-header .logo {
-  font-size: 1.02rem; font-weight: 800; color: var(--text-1);
+  font-size: 1rem; font-weight: 700; color: var(--text-1);
   letter-spacing: -0.02em; white-space: nowrap;
 }
-.site-header .logo:hover { text-decoration: none; color: var(--plum); }
-.site-header nav { display: flex; gap: 1.1rem; flex-wrap: wrap; justify-content: flex-end; }
-.site-header nav a { font-size: 0.86rem; font-weight: 600; color: var(--text-2); }
-.site-header nav a:hover { color: var(--plum); text-decoration: none; }
+.site-header .logo:hover { color: var(--plum-light); }
+.site-header nav { display: flex; gap: 1.4rem; flex-wrap: wrap; justify-content: flex-end; }
+.site-header nav a { font-size: 0.84rem; font-weight: 500; color: var(--text-2); letter-spacing: 0.01em; }
+.site-header nav a:hover { color: var(--text-1); }
 
-/* ── 히어로 ── */
+/* ── 히어로: 보이드 + 바이올렛 글로우 ── */
 .hero-section {
-  padding: 3.75rem 0 2.75rem;
+  padding: 5rem 0 3.5rem;
   background:
-    radial-gradient(640px 300px at 12% 0%, rgba(12, 122, 141, 0.10), transparent 70%),
-    radial-gradient(520px 260px at 88% 10%, rgba(15, 118, 110, 0.07), transparent 70%),
-    linear-gradient(180deg, var(--bg-2) 0%, var(--bg-1) 100%);
+    radial-gradient(700px 340px at 50% -10%, rgba(139, 92, 246, 0.16), transparent 70%);
   border-bottom: 1px solid var(--border);
 }
 .breadcrumb {
   display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap;
-  font-size: 0.8rem; color: var(--text-3); margin-bottom: 1rem;
+  font-size: 0.78rem; color: var(--text-3); margin-bottom: 1.25rem;
+  letter-spacing: 0.02em;
 }
 .breadcrumb a { color: var(--text-3); }
-.breadcrumb a:hover { color: var(--plum); }
+.breadcrumb a:hover { color: var(--text-2); }
 .hero-section h1 {
-  font-size: clamp(1.65rem, 4vw, 2.5rem);
-  font-weight: 800; letter-spacing: -0.045em; line-height: 1.25;
-  color: var(--text-1); margin-bottom: 0.65rem;
+  font-size: clamp(1.8rem, 4.5vw, 2.9rem);
+  font-weight: 800; letter-spacing: -0.055em; line-height: 1.15; /* 디스플레이: 초타이트 트래킹 */
+  color: var(--text-1); margin-bottom: 0.8rem;
   text-wrap: balance;
 }
-.hero-sub { color: var(--text-2); font-size: 1rem; margin-bottom: 1.1rem; max-width: 46em; }
+.hero-sub { color: var(--text-2); font-size: 1rem; margin-bottom: 1.4rem; max-width: 44em; }
 .hero-badges { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+
+/* 필 배지 — 헤어라인 + 미세 틴트 */
 .badge {
   display: inline-flex; align-items: center;
-  padding: 0.28rem 0.8rem; border-radius: 999px;
-  font-size: 0.75rem; font-weight: 700; letter-spacing: 0.01em;
+  padding: 0.3rem 0.85rem; border-radius: 999px;
+  font-size: 0.72rem; font-weight: 600; letter-spacing: 0.04em;
+  border: 1px solid var(--border); color: var(--text-2); background: transparent;
 }
-.badge-hira   { background: #e2f1f4; color: #085d6c; border: 1px solid #bcdde3; }
-.badge-law    { background: #fdf4e7; color: #92600a; border: 1px solid #f0dcb8; }
-.badge-update { background: #e5f3f1; color: #0b5f59; border: 1px solid #bfe0dc; }
+.badge-hira   { border-color: rgba(139, 92, 246, 0.45); color: var(--plum-light); }
+.badge-law    { border-color: var(--border); color: var(--text-2); }
+.badge-update { border-color: var(--border); color: var(--text-2); }
 
 /* ── 공지 박스 ── */
-.notice-section { padding: 1.5rem 0; }
+.notice-section { padding: 1.75rem 0; }
 .notice-box {
   display: flex; gap: 0.9rem; align-items: flex-start;
-  background: #fdf7ec; border: 1px solid #f0dcb8;
-  border-radius: var(--radius-sm); padding: 1rem 1.25rem;
+  background: rgba(139, 92, 246, 0.06);
+  border: 1px solid rgba(139, 92, 246, 0.22);
+  border-radius: var(--radius-sm); padding: 1rem 1.3rem;
 }
-.notice-icon { font-size: 1.05rem; color: #92600a; flex-shrink: 0; margin-top: 0.1rem; }
-.notice-text { font-size: 0.875rem; color: var(--text-2); }
+.notice-icon { font-size: 1rem; color: var(--plum-light); flex-shrink: 0; margin-top: 0.15rem; }
+.notice-text { font-size: 0.86rem; color: var(--text-2); }
 .notice-text strong { color: var(--text-1); }
 
-/* ── 요약 카드 (통계) ── */
-.summary-section { padding: 2.25rem 0; }
+/* ── 요약 통계 카드 ── */
+.summary-section { padding: 2.5rem 0; }
 .section-title {
-  font-size: 1.3rem; font-weight: 800; margin-bottom: 1rem;
-  letter-spacing: -0.025em;
+  font-size: 1.3rem; font-weight: 700; margin-bottom: 1.1rem;
+  letter-spacing: -0.03em;
 }
 .summary-grid {
   display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
-  gap: 0.9rem;
+  gap: 1px; background: var(--border); border: 1px solid var(--border);
+  border-radius: var(--radius); overflow: hidden;
 }
-.summary-card {
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: var(--radius); padding: 1.2rem 1.3rem;
-  box-shadow: var(--shadow-1);
+.summary-card { background: var(--bg-1); padding: 1.4rem 1.5rem; }
+.summary-label {
+  font-size: 0.72rem; font-weight: 600; color: var(--text-3);
+  letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 0.45rem;
 }
-.summary-label { font-size: 0.78rem; font-weight: 600; color: var(--text-3); margin-bottom: 0.35rem; }
 .summary-value {
-  font-size: 1.9rem; font-weight: 800; color: var(--plum);
-  font-variant-numeric: tabular-nums; letter-spacing: -0.02em;
+  font-size: 2rem; font-weight: 800; color: var(--text-1);
+  font-variant-numeric: tabular-nums; letter-spacing: -0.03em;
 }
-.summary-value .unit { font-size: 0.95rem; font-weight: 700; margin-left: 0.15rem; color: var(--text-2); }
-.summary-value-range { font-size: 1.15rem; font-weight: 800; color: var(--gold); font-variant-numeric: tabular-nums; }
-.summary-value-text  { font-size: 1rem; font-weight: 700; color: var(--teal); }
-.summary-desc { font-size: 0.75rem; color: var(--text-3); margin-top: 0.35rem; }
+.summary-value .unit { font-size: 0.95rem; font-weight: 600; margin-left: 0.15rem; color: var(--text-3); }
+.summary-value-range { font-size: 1.15rem; font-weight: 700; color: var(--plum-light); font-variant-numeric: tabular-nums; }
+.summary-value-text  { font-size: 1rem; font-weight: 700; color: var(--plum-light); }
+.summary-desc { font-size: 0.75rem; color: var(--text-3); margin-top: 0.4rem; }
 
-/* ── 비교 표 ── */
-.compare-section { padding: 2.25rem 0; }
-.section-desc { font-size: 0.875rem; color: var(--text-3); margin-bottom: 1rem; }
+/* ── 비교 표: 헤어라인 디바이더 ── */
+.compare-section { padding: 2.5rem 0; }
+.section-desc { font-size: 0.86rem; color: var(--text-3); margin-bottom: 1.1rem; }
 
 .compare-table {
   width: 100%; border-collapse: separate; border-spacing: 0;
-  font-size: 0.875rem;
-  background: var(--surface);
+  font-size: 0.87rem;
+  background: transparent;
   border: 1px solid var(--border);
   border-radius: var(--radius);
   overflow: hidden;
-  box-shadow: var(--shadow-1);
 }
 .compare-table th {
-  background: var(--bg-3); color: var(--text-2);
-  padding: 0.8rem 1rem; text-align: left;
-  font-weight: 700; font-size: 0.76rem; letter-spacing: 0.02em;
+  background: var(--bg-3); color: var(--text-3);
+  padding: 0.8rem 1.1rem; text-align: left;
+  font-weight: 600; font-size: 0.7rem; letter-spacing: 0.09em; text-transform: uppercase;
   border-bottom: 1px solid var(--border);
   white-space: nowrap;
 }
 .compare-table td {
-  padding: 0.75rem 1rem; color: var(--text-1);
+  padding: 0.85rem 1.1rem; color: var(--text-1);
   border-bottom: 1px solid var(--border);
   font-variant-numeric: tabular-nums;
 }
 .compare-table tbody tr:last-child td { border-bottom: none; }
-.compare-table tbody tr:hover td { background: #f2f8f9; }
-.price-cell { font-weight: 800; color: var(--gold); }
+.compare-table tbody tr:hover td { background: rgba(255, 255, 255, 0.03); }
+.price-cell { font-weight: 700; color: var(--plum-light); }
 .tfoot-note {
-  color: var(--text-3); font-size: 0.75rem; padding: 0.65rem 1rem;
+  color: var(--text-3); font-size: 0.74rem; padding: 0.7rem 1.1rem;
   background: var(--bg-3); border-top: 1px solid var(--border);
-  font-variant-numeric: normal;
+  font-variant-numeric: normal; text-transform: none; letter-spacing: 0.01em;
 }
 
 /* ── 클리닉 카드 ── */
-.clinics-section { padding: 2.25rem 0; }
+.clinics-section { padding: 2.5rem 0; }
 .clinic-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 1rem;
 }
 .clinic-card {
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: var(--radius); padding: 1.3rem;
-  transition: box-shadow 0.18s, transform 0.18s, border-color 0.18s;
+  background: transparent; border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 1.4rem;
+  transition: border-color 0.15s;
   position: relative; overflow: hidden;
-  box-shadow: var(--shadow-1);
 }
-.clinic-card:hover { border-color: #bcdde3; box-shadow: var(--shadow-2); transform: translateY(-2px); }
+.clinic-card:hover { border-color: rgba(139, 92, 246, 0.5); }
 .clinic-rank {
-  position: absolute; top: 1rem; right: 1rem;
-  font-size: 0.7rem; font-weight: 800; color: var(--text-3);
-  letter-spacing: 0.06em;
+  position: absolute; top: 1.1rem; right: 1.1rem;
+  font-size: 0.68rem; font-weight: 700; color: var(--text-3);
+  letter-spacing: 0.1em;
 }
 .clinic-name {
-  font-size: 1.02rem; font-weight: 800; margin-bottom: 0.4rem;
-  padding-right: 2.5rem; letter-spacing: -0.01em;
+  font-size: 1.02rem; font-weight: 700; margin-bottom: 0.45rem;
+  padding-right: 2.5rem; letter-spacing: -0.02em;
 }
 .clinic-meta {
   display: flex; align-items: center; gap: 0.35rem; flex-wrap: wrap;
-  font-size: 0.78rem; color: var(--text-3); margin-bottom: 0.75rem;
+  font-size: 0.77rem; color: var(--text-3); margin-bottom: 0.8rem;
 }
 .clinic-price-row {
   display: flex; justify-content: space-between; align-items: center;
-  background: #f0f7f8; border: 1px solid #d7e8eb;
-  border-radius: var(--radius-sm); padding: 0.55rem 0.8rem; margin-bottom: 0.75rem;
+  border: 1px solid rgba(139, 92, 246, 0.28);
+  border-radius: 999px; padding: 0.5rem 1rem; margin-bottom: 0.8rem;
 }
-.price-label { font-size: 0.75rem; font-weight: 600; color: var(--plum-light); }
-.price-value { font-size: 1rem; font-weight: 800; color: var(--gold); font-variant-numeric: tabular-nums; }
+.price-label { font-size: 0.73rem; font-weight: 500; color: var(--text-3); letter-spacing: 0.03em; }
+.price-value { font-size: 0.98rem; font-weight: 700; color: var(--plum-light); font-variant-numeric: tabular-nums; }
 .clinic-addr { font-size: 0.8rem; color: var(--text-2); margin-bottom: 0.35rem; }
 .clinic-rmrk { font-size: 0.75rem; color: var(--text-3); margin-bottom: 0.4rem; }
 .hira-badge {
   display: inline-flex; align-items: center;
   font-size: 0.7rem; color: var(--text-3);
-  border-top: 1px solid var(--border); padding-top: 0.55rem; margin-top: 0.55rem;
-  width: 100%;
+  border-top: 1px solid var(--border); padding-top: 0.6rem; margin-top: 0.6rem;
+  width: 100%; letter-spacing: 0.02em;
 }
-.no-data { color: var(--text-3); padding: 2.5rem 1rem; text-align: center; }
+.no-data { color: var(--text-3); padding: 3rem 1rem; text-align: center; }
 
 /* ── 가이드 카드 ── */
-.guide-section { padding: 2.25rem 0; }
+.guide-section { padding: 2.5rem 0; }
 .guide-grid {
   display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
-  gap: 0.9rem;
+  gap: 1rem;
 }
 .guide-card {
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: var(--radius); padding: 1.25rem 1.3rem;
-  box-shadow: var(--shadow-1);
+  background: transparent; border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 1.35rem 1.4rem;
+  transition: border-color 0.15s;
 }
+.guide-card:hover { border-color: rgba(255, 255, 255, 0.2); }
 .guide-card h3 {
-  font-size: 0.94rem; font-weight: 800; margin-bottom: 0.5rem;
-  color: var(--plum);
+  font-size: 0.92rem; font-weight: 700; margin-bottom: 0.55rem;
+  color: var(--plum-light); letter-spacing: -0.01em;
 }
-.guide-card p { font-size: 0.86rem; color: var(--text-2); }
+.guide-card p { font-size: 0.85rem; color: var(--text-2); }
 
 /* ── FAQ ── */
-.faq-section { padding: 2.25rem 0; }
-.faq-list { display: flex; flex-direction: column; gap: 0.55rem; }
-.faq-item {
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: var(--radius-sm); overflow: hidden;
-  box-shadow: var(--shadow-1);
-}
+.faq-section { padding: 2.5rem 0; }
+.faq-list { display: flex; flex-direction: column; gap: 0; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+.faq-item { background: transparent; border: 0; border-bottom: 1px solid var(--border); border-radius: 0; }
+.faq-item:last-child { border-bottom: 0; }
 .faq-item summary {
-  cursor: pointer; padding: 1rem 1.25rem;
-  font-size: 0.92rem; font-weight: 700; list-style: none;
+  cursor: pointer; padding: 1.05rem 1.4rem;
+  font-size: 0.92rem; font-weight: 600; list-style: none;
   display: flex; justify-content: space-between; align-items: center; gap: 1rem;
+  letter-spacing: -0.01em;
 }
 .faq-item summary::-webkit-details-marker { display: none; }
 .faq-item summary::after {
-  content: '+'; color: var(--plum); font-size: 1.15rem; font-weight: 700;
-  transition: transform 0.15s; flex-shrink: 0;
+  content: '+'; color: var(--plum); font-size: 1.2rem; font-weight: 500; flex-shrink: 0;
 }
 .faq-item[open] summary::after { content: '−'; }
-.faq-item summary:hover { background: #f6fafb; }
+.faq-item summary:hover { background: rgba(255, 255, 255, 0.03); }
 .faq-ans {
-  padding: 0 1.25rem 1.05rem; font-size: 0.875rem;
-  color: var(--text-2); line-height: 1.75;
+  padding: 0 1.4rem 1.15rem; font-size: 0.87rem;
+  color: var(--text-2); line-height: 1.8;
 }
 
 /* ── 출처 ── */
-.source-section { padding: 2.25rem 0; }
+.source-section { padding: 2.5rem 0; }
 .source-box {
   background: var(--bg-3); border: 1px solid var(--border);
-  border-radius: var(--radius); padding: 1.4rem 1.5rem;
+  border-radius: var(--radius); padding: 1.5rem 1.6rem;
 }
-.source-box h3 { font-size: 0.95rem; font-weight: 800; margin-bottom: 0.7rem; }
+.source-box h3 { font-size: 0.92rem; font-weight: 700; margin-bottom: 0.75rem; letter-spacing: -0.01em; }
 .source-box ul { padding-left: 1.25rem; }
-.source-box li { font-size: 0.85rem; color: var(--text-2); margin-bottom: 0.35rem; }
-.source-box a { color: var(--plum-light); font-weight: 600; }
+.source-box li { font-size: 0.84rem; color: var(--text-2); margin-bottom: 0.4rem; }
+.source-box a { color: var(--plum-light); }
 
 /* ── 푸터 ── */
 .site-footer {
-  border-top: 1px solid var(--border); padding: 2.25rem 0 2.5rem;
-  background: var(--bg-2); margin-top: 3.5rem;
+  border-top: 1px solid var(--border); padding: 2.5rem 0 3rem;
+  background: var(--bg-1); margin-top: 4rem;
 }
 .footer-links {
-  display: flex; gap: 1.25rem; flex-wrap: wrap; margin-bottom: 0.75rem;
+  display: flex; gap: 1.4rem; flex-wrap: wrap; margin-bottom: 0.9rem;
 }
-.footer-links a { font-size: 0.85rem; font-weight: 600; color: var(--text-2); }
-.footer-note { font-size: 0.8rem; color: var(--text-3); margin-bottom: 0.5rem; line-height: 1.6; }
-.footer-copy { font-size: 0.75rem; color: var(--text-3); }
+.footer-links a { font-size: 0.83rem; font-weight: 500; color: var(--text-2); }
+.footer-links a:hover { color: var(--text-1); }
+.footer-note { font-size: 0.78rem; color: var(--text-3); margin-bottom: 0.5rem; line-height: 1.7; }
+.footer-copy { font-size: 0.73rem; color: var(--text-3); }
 
-/* ── CTA 버튼 ── */
+/* ── CTA: 필 버튼, 단일 액센트 ── */
 .cta-btn {
-  display: inline-flex; align-items: center; gap: 0.3rem;
-  padding: 0.72rem 1.5rem; border-radius: 999px;
+  display: inline-flex; align-items: center; gap: 0.35rem;
+  padding: 0.7rem 1.6rem; border-radius: 999px;
   background: var(--plum); color: #fff;
-  font-weight: 700; font-size: 0.95rem;
-  box-shadow: 0 2px 8px rgba(12, 122, 141, 0.28);
-  transition: background 0.18s, transform 0.12s, box-shadow 0.18s;
+  font-weight: 600; font-size: 0.92rem; letter-spacing: 0;
+  transition: background 0.15s;
   margin: 0.25rem 0.5rem 0.25rem 0;
 }
-.cta-btn:hover {
-  background: #095d6c; color: #fff; text-decoration: none;
-  transform: translateY(-1px); box-shadow: 0 4px 12px rgba(12, 122, 141, 0.34);
-}
+.cta-btn:hover { background: #7c4ff0; color: #fff; }
 .cta-secondary {
-  background: var(--surface); border: 1.5px solid #bcdde3;
-  color: var(--plum); box-shadow: none;
+  background: transparent; border: 1px solid var(--border);
+  color: var(--text-1);
 }
-.cta-secondary:hover { background: #e2f1f4; border-color: var(--plum); color: var(--plum); box-shadow: none; }
+.cta-secondary:hover { background: rgba(255, 255, 255, 0.05); border-color: rgba(255, 255, 255, 0.25); color: var(--text-1); }
 
 /* ── 지역 그리드 ── */
 .region-grid {
@@ -310,33 +308,30 @@ a:hover { color: var(--plum); text-decoration: underline; text-underline-offset:
 }
 .region-card {
   display: flex; flex-direction: column; align-items: center; justify-content: center;
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: var(--radius); padding: 1.8rem 1rem; text-align: center;
-  color: var(--text-1); transition: border-color 0.18s, transform 0.15s, box-shadow 0.18s;
-  min-height: 130px; box-shadow: var(--shadow-1);
+  background: transparent; border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 2rem 1rem; text-align: center;
+  color: var(--text-1); transition: border-color 0.15s;
+  min-height: 130px;
 }
-.region-card:hover {
-  border-color: #bcdde3; transform: translateY(-3px);
-  box-shadow: var(--shadow-2); color: var(--text-1); text-decoration: none;
-}
-.region-name { font-size: 1.45rem; font-weight: 800; margin-bottom: 0.2rem; letter-spacing: -0.02em; }
-.region-sub { font-size: 0.73rem; color: var(--text-3); margin-bottom: 0.7rem; letter-spacing: 0.06em; }
+.region-card:hover { border-color: rgba(139, 92, 246, 0.5); color: var(--text-1); }
+.region-name { font-size: 1.5rem; font-weight: 800; margin-bottom: 0.2rem; letter-spacing: -0.04em; }
+.region-sub { font-size: 0.7rem; color: var(--text-3); margin-bottom: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; }
 .region-badge {
-  font-size: 0.7rem; font-weight: 700;
-  padding: 0.22rem 0.65rem; border-radius: 999px;
-  background: #e5f3f1; color: #0b5f59; border: 1px solid #bfe0dc;
+  font-size: 0.68rem; font-weight: 600;
+  padding: 0.22rem 0.7rem; border-radius: 999px;
+  background: transparent; color: var(--plum-light); border: 1px solid rgba(139, 92, 246, 0.4);
+  letter-spacing: 0.03em;
 }
-/* 허브/목록 페이지의 region-card (h3 + p 구조) */
-.region-card h3 { font-size: 1.05rem; font-weight: 800; margin-bottom: 0.3rem; color: var(--text-1); letter-spacing: -0.01em; }
-.region-card p { font-size: 0.82rem; color: var(--text-3); }
+.region-card h3 { font-size: 1.05rem; font-weight: 700; margin-bottom: 0.35rem; color: var(--text-1); letter-spacing: -0.02em; }
+.region-card p { font-size: 0.8rem; color: var(--text-3); }
 
 /* ── 반응형 ── */
 @media (max-width: 720px) {
-  .site-header nav { gap: 0.75rem; }
-  .site-header nav a { font-size: 0.8rem; }
-  .hero-section { padding: 2.5rem 0 2rem; }
+  .site-header nav { gap: 0.8rem; }
+  .site-header nav a { font-size: 0.78rem; }
+  .hero-section { padding: 3rem 0 2.25rem; }
   .compare-table { display: block; overflow-x: auto; white-space: nowrap; -webkit-overflow-scrolling: touch; }
-  .compare-table th, .compare-table td { padding: 0.6rem 0.7rem; font-size: 0.8rem; }
+  .compare-table th, .compare-table td { padding: 0.65rem 0.75rem; font-size: 0.8rem; }
   .clinic-grid, .guide-grid { grid-template-columns: 1fr; }
   .summary-grid { grid-template-columns: repeat(2, 1fr); }
   .summary-value { font-size: 1.5rem; }
