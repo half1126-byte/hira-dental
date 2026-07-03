@@ -16,7 +16,7 @@ import { fileURLToPath } from 'node:url';
 
 const __dir = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dir, '..');
-const BASE_URL = 'https://half1126-byte.github.io/hira-dental';
+import { BASE_URL } from './site-config.js';
 
 const won = n => `${Math.round(n / 10000)}만원`;
 const comma = n => Number(n).toLocaleString('ko-KR');

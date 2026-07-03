@@ -14,7 +14,7 @@ const DATA   = join(ROOT, 'data');
 const TMPL   = join(ROOT, 'templates');
 const DENTAL = join(ROOT, 'dental');
 
-const BASE_URL = 'https://half1126-byte.github.io/hira-dental';
+import { BASE_URL } from './site-config.js';
 
 // 의료광고법 제56조 금지어
 const LAW_HARD = ['최고', '1위', '최저가', '유일', '완치', '보장', '100%', '최상급', '명품', '무통'];
