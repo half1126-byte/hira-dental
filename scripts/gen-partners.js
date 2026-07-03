@@ -17,6 +17,7 @@
 import { readFileSync, writeFileSync, mkdirSync, existsSync, readdirSync, rmSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { detectAreas, areaSlugLabel } from './area-util.js';
 
 const __dir = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dir, '..');
@@ -38,6 +39,15 @@ const DISCLOSURE =
 const REGION_EN = { 서울: 'seoul', 경기: 'gyeonggi', 부산: 'busan', 인천: 'incheon' };
 function regionCompareUrl(sido) {
   return REGION_EN[sido] ? `${BASE_URL}/dental/${REGION_EN[sido]}-implant/` : `${BASE_URL}/dental/`;
+}
+
+/** 동·역세권 페이지 내부 링크 (크롤링 경로 확보) */
+function localLinks(p) {
+  const links = detectAreas(p).map(a => {
+    const { slug, label } = areaSlugLabel(a, p);
+    return `<a href="${BASE_URL}/local/${slug}/" class="partner-tag">${esc(label)} 치과 →</a>`;
+  });
+  return links.length ? `<div style="margin-top:0.8rem;display:flex;gap:0.5rem;flex-wrap:wrap">${links.join('')}</div>` : '';
 }
 
 function fmt(amt) {
@@ -314,6 +324,7 @@ function generatePartnerHtml(p, buildDate) {
   <section class="related-section">
     <h2>같은 지역 가격 비교</h2>
     <a href="${regionCompareUrl(p.sido)}" class="cta-btn">${esc(p.sido)} 지역 임플란트 가격 비교 보기 →</a>
+    ${localLinks(p)}
   </section>
 
 </main>
