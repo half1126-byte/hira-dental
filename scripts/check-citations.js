@@ -34,6 +34,10 @@ function buildQueries() {
         { q: `${p.sgguNm} 치과 추천`, target: `${p.name} 프로필/지역 아티클` },
         { q: `${p.name} 진료시간 위치`, target: `${p.name} 프로필` },
       );
+      const t = `${p.hours ?? ''} ${(p.features ?? []).join(' ')}`;
+      if (/야간/.test(t)) queries.push({ q: `${p.sgguNm} 야간진료 치과`, target: '니즈별 찾기 페이지' });
+      if (/365일/.test(t) || (/(일요일|공휴일|주말)[^·\n]*진료/.test(t) && !/휴진/.test(t)))
+        queries.push({ q: `${p.sgguNm} 일요일 진료 치과`, target: '니즈별 찾기 페이지' });
     }
   }
   return queries;

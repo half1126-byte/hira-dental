@@ -76,7 +76,7 @@ const SGGU_SLUG_MAP = {
   '인천검단구': 'incheon-geomdan', '인천서해구': 'incheon-seohae',
 };
 
-function toSlug(sgguNm) {
+export function toSlug(sgguNm) {
   if (SGGU_SLUG_MAP[sgguNm]) return SGGU_SLUG_MAP[sgguNm];
   // fallback: 한글 제거, 영문/숫자만 남김
   return sgguNm.replace(/[가-힣]/g, '').replace(/\s+/g, '-').toLowerCase() || 'unknown';
@@ -257,6 +257,12 @@ function generateArticleHtml(clinics, sgguNm, sidoNm, sidoEn, sgguSlug, buildDat
   <meta name="robots" content="index, follow">
   <title>${title}</title>
   <meta name="description" content="건강보험심사평가원(HIRA) 비급여 공개 데이터 기반 ${sidoNm} ${sgguNm} 임플란트 치과 가격 정보 ${clinics.length}곳. 신고 기준가, 연락처, 주소 포함.">
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="${title}">
+  <meta property="og:description" content="건강보험심사평가원 데이터 기반 ${sidoNm} ${sgguNm} 임플란트 가격 정보">
+  <meta property="og:url" content="${url}">
+  <meta property="og:site_name" content="${SITE_NAME}">
+  <meta property="og:locale" content="ko_KR">
   <link rel="canonical" href="${url}">
   <link rel="preconnect" href="https://cdn.jsdelivr.net">
   <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" rel="stylesheet">

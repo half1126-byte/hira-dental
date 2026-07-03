@@ -301,6 +301,11 @@ function pageShell({ title, desc, canonicalPath, heroTitle, heroSub, body, build
   <meta name="robots" content="index, follow">
   <title>${title}</title>
   <meta name="description" content="${desc}">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="${title}">
+  <meta property="og:description" content="${desc}">
+  <meta property="og:url" content="${BASE_URL}${canonicalPath}">
+  <meta property="og:locale" content="ko_KR">
   <link rel="canonical" href="${BASE_URL}${canonicalPath}">
   <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" rel="stylesheet">
   <link rel="stylesheet" href="${BASE_URL}/style.css">

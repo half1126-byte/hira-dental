@@ -12,6 +12,8 @@ import { generateRegionPage, generateSitemap, generateDentalHub, generateCompare
 import { generateAllArticlesForSido, generateArticlesIndex, REGION_META } from './gen-articles.js';
 import { generateAllPartnerPages } from './gen-partners.js';
 import { enrichPartners } from './enrich-partners.js';
+import { generateAllFindPages } from './gen-find.js';
+import { generateLlmsTxt } from './gen-llms.js';
 import { writeFileSync, mkdirSync } from 'node:fs';
 
 const __dir = dirname(fileURLToPath(import.meta.url));
@@ -144,6 +146,17 @@ async function main() {
     process.exit(1); // LAW_HARD 위반 시 빌드 중단
   }
 
+  // 3.6 니즈별 찾기 페이지 + llms.txt 자동 갱신
+  console.log('\n── 3.6단계: 니즈별 페이지·llms.txt ──');
+  let findPages = [];
+  try {
+    findPages = generateAllFindPages(BUILD_DATE);
+    generateLlmsTxt(findPages, BUILD_DATE);
+  } catch (e) {
+    console.error(`  ✗ 니즈 페이지 생성 실패: ${e.message}`);
+    process.exit(1);
+  }
+
   // 4. sitemap.xml 생성
   console.log('\n── 4단계: sitemap.xml 생성 ──');
   generateSitemap(
@@ -155,6 +168,7 @@ async function main() {
       { path: '/articles/', priority: '0.8', freq: 'weekly' },
       ...articlePages,
       ...partnerPages,
+      ...findPages,
     ],
     BUILD_DATE,
   );
@@ -164,7 +178,7 @@ async function main() {
   const { execSync } = await import('node:child_process');
   try {
     execSync(
-      'node -e "const{readdirSync,readFileSync}=require(\'fs\');const{join}=require(\'path\');function scan(d){try{for(const f of readdirSync(d,{withFileTypes:true})){if(f.isDirectory())scan(join(d,f.name));else if(f.name.endsWith(\'.html\')){const c=readFileSync(join(d,f.name),\'utf8\');const hits=[\'nO3sSSWe\',\'Gwwwwang94\'].filter(k=>c.includes(k));if(hits.length)throw new Error(\'SECRET LEAK: \'+join(d,f.name)+\' :: \'+hits.join(\',\'));}}}catch(e){if(e.code!==\'ENOENT\')throw e}};scan(\'dental\');scan(\'articles\');scan(\'clinics\')"',
+      'node -e "const{readdirSync,readFileSync}=require(\'fs\');const{join}=require(\'path\');function scan(d){try{for(const f of readdirSync(d,{withFileTypes:true})){if(f.isDirectory())scan(join(d,f.name));else if(f.name.endsWith(\'.html\')){const c=readFileSync(join(d,f.name),\'utf8\');const hits=[\'nO3sSSWe\',\'Gwwwwang94\'].filter(k=>c.includes(k));if(hits.length)throw new Error(\'SECRET LEAK: \'+join(d,f.name)+\' :: \'+hits.join(\',\'));}}}catch(e){if(e.code!==\'ENOENT\')throw e}};scan(\'dental\');scan(\'articles\');scan(\'clinics\');scan(\'find\')"',
       { cwd: ROOT, stdio: 'inherit' },
     );
     console.log('  ✓ 시크릿 스캔 통과');
