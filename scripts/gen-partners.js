@@ -208,6 +208,12 @@ function generatePartnerHtml(p, buildDate) {
   <meta name="robots" content="index, follow">
   <title>${esc(title)}</title>
   <meta name="description" content="${esc(p.name)} — ${esc(p.sido)} ${esc(p.sgguNm)} 치과. ${p.specialties?.length ? esc(p.specialties.join('·')) + ' 진료. ' : ''}비급여 가격·진료시간·위치 정보. HIRA 공개 데이터 및 의료기관 제공 자료 기반.">
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="${esc(title)}">
+  <meta property="og:description" content="${esc(p.name)} — ${esc(p.sido)} ${esc(p.sgguNm)} 치과 정보·비급여 가격">
+  <meta property="og:url" content="${url}">
+  <meta property="og:site_name" content="${SITE_NAME}">
+  <meta property="og:locale" content="ko_KR">
   <link rel="canonical" href="${url}">
   <link rel="alternate" type="application/json" href="${url}clinic.json" title="기계가독 데이터">
   <link rel="preconnect" href="https://cdn.jsdelivr.net">
