@@ -18,8 +18,8 @@ const __dir = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dir, '..');
 
 const KEY = '01641d0d88be2025b555e6f89832ade7'; // 공개 키 (사이트 루트 <key>.txt로 호스팅, 비밀 아님)
-const BASE_URL = 'https://half1126-byte.github.io/hira-dental';
-const HOST = 'half1126-byte.github.io';
+import { BASE_URL, SITE_DOMAIN } from './site-config.js';
+const HOST = SITE_DOMAIN;
 
 // 배포된 라이브 sitemap 우선 (CI 빌드가 재생성한 최신본), 실패 시 로컬 파일
 async function loadSitemap() {

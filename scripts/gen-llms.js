@@ -10,7 +10,7 @@ import { loadPartners } from './gen-partners.js';
 
 const __dir = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dir, '..');
-const BASE_URL = 'https://half1126-byte.github.io/hira-dental';
+import { BASE_URL } from './site-config.js';
 
 export function generateLlmsTxt(findPages = [], buildDate = '', localPages = []) {
   const partners = loadPartners();

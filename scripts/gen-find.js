@@ -17,7 +17,7 @@ const __dir = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dir, '..');
 const OUT_DIR = join(ROOT, 'find');
 
-const BASE_URL = 'https://half1126-byte.github.io/hira-dental';
+import { BASE_URL } from './site-config.js';
 const SITE_NAME = '메디픽 MediPick';
 const LAW_HARD = ['최고', '1위', '최저가', '유일', '완치', '보장', '100%', '최상급', '명품', '무통'];
 
