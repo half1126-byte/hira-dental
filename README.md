@@ -2,7 +2,7 @@
 
 건강보험심사평가원(HIRA) 공공데이터 기반 치과 임플란트 비급여 가격 비교 사이트.
 
-**라이브:** https://half1126-byte.github.io/hira-dental/
+**라이브:** https://xn--2z1bo3hsx1a.com/
 
 ---
 

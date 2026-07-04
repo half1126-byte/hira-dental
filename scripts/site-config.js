@@ -10,7 +10,7 @@
  *   자세한 절차: docs/도메인-전환.md
  */
 
-export const BASE_URL = 'https://half1126-byte.github.io/hira-dental';
+export const BASE_URL = 'https://xn--2z1bo3hsx1a.com';
 
 // 인용 모니터링·IndexNow가 쓰는 호스트명 (BASE_URL에서 자동 파생)
 export const SITE_DOMAIN = new URL(BASE_URL).host;

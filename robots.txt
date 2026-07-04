@@ -47,4 +47,4 @@ Allow: /
 User-agent: Bytespider
 Allow: /
 
-Sitemap: https://half1126-byte.github.io/hira-dental/sitemap.xml
+Sitemap: https://xn--2z1bo3hsx1a.com/sitemap.xml

@@ -110,4 +110,4 @@ jobs:
         run: |
           gh workflow run build.yml --ref main -R "${{ github.repository }}"
           echo "✅ 빌드·배포가 시작되었습니다. Actions 탭의 'HIRA Data Refresh & Deploy' 실행을 확인하세요."
-          echo "   완료 후 확인: https://half1126-byte.github.io/hira-dental/clinics/"
+          echo "   완료 후 확인: https://xn--2z1bo3hsx1a.com/clinics/"
