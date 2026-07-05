@@ -1,7 +1,7 @@
 {
   "index": "메디픽 임플란트 가격지수",
   "month": "2026-07",
-  "updatedAt": "2026-07-05",
+  "updatedAt": "2026-07-06",
   "source": "HIRA nonPaymentDamtInfoService (clCd=41)",
   "regions": [
     {
@@ -18,7 +18,7 @@
       "regionEn": "gyeonggi",
       "count": 43,
       "median": 1290000,
-      "mean": 1269279,
+      "mean": 1271605,
       "min": 300000,
       "max": 3559000
     },
