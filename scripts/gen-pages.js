@@ -154,6 +154,13 @@ function buildJsonLd(prices, regionNm, regionEn, buildDate) {
     },
   }));
 
+  const validAmts = prices.filter(p => p.curAmt && p.curAmt > 0).map(p => p.curAmt);
+  const minW = validAmts.length ? Math.round(Math.min(...validAmts) / 10000) : null;
+  const maxW = validAmts.length ? Math.round(Math.max(...validAmts) / 10000) : null;
+  const faqQ1Text = (validAmts.length && minW && maxW && minW !== maxW)
+    ? `건강보험심사평가원 비급여 신고 데이터 기준, ${regionNm} 치과의원의 임플란트 신고 가격은 ${minW}만원~${maxW}만원(${validAmts.length}개 기관 신고 기준)입니다. 재료·추가시술에 따라 실제 비용은 다를 수 있습니다.`
+    : `건강보험심사평가원 비급여 신고 데이터 기준, ${regionNm} 치과의원의 임플란트 가격은 기관마다 다릅니다. 본 페이지에서 신고된 가격 정보를 확인하실 수 있습니다.`;
+
   const schemas = [
     {
       '@context': 'https://schema.org',
@@ -181,7 +188,7 @@ function buildJsonLd(prices, regionNm, regionEn, buildDate) {
           name: `${regionNm} 임플란트 가격은 얼마인가요?`,
           acceptedAnswer: {
             '@type': 'Answer',
-            text: `건강보험심사평가원 비급여 신고 데이터 기준, ${regionNm} 치과의원의 임플란트 가격은 기관마다 다릅니다. 본 페이지에서 신고된 가격 정보를 확인하실 수 있습니다.`,
+            text: faqQ1Text,
           },
         },
         {
