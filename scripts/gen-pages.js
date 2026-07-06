@@ -78,6 +78,7 @@ function buildClinicCards(prices, top = 20) {
         <span class="price-label">HIRA 신고 임플란트</span>
         <span class="price-value">${priceStr}</span>
       </div>
+      <div class="clinic-price-cond">신고 기준가 · 재료·추가시술에 따라 실제 비용 다를 수 있음</div>
       ${addr ? `<div class="clinic-addr">${addr}</div>` : ''}
       ${rmrk ? `<div class="clinic-rmrk">${rmrk}</div>` : ''}
       <div class="hira-badge">건강보험심사평가원 비급여 신고 데이터</div>
@@ -306,6 +307,8 @@ function pageShell({ title, desc, canonicalPath, heroTitle, heroSub, body, build
   <meta property="og:description" content="${desc}">
   <meta property="og:url" content="${BASE_URL}${canonicalPath}">
   <meta property="og:locale" content="ko_KR">
+  <meta property="article:published_time" content="${buildDate}">
+  <meta property="article:modified_time" content="${buildDate}">
   <link rel="canonical" href="${BASE_URL}${canonicalPath}">
   <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" rel="stylesheet">
   <link rel="stylesheet" href="${BASE_URL}/style.css">
