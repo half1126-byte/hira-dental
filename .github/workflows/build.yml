@@ -53,7 +53,7 @@ jobs:
       - name: Prepare Pages output (_site)
         run: |
           mkdir -p _site
-          cp -r dental articles clinics find local price-index admin index.html style.css article.css robots.txt llms.txt sitemap.xml 01641d0d88be2025b555e6f89832ade7.txt CNAME _site/
+          cp -r dental articles clinics find local price-index admin index.html style.css article.css robots.txt llms.txt sitemap.xml 01641d0d88be2025b555e6f89832ade7.txt CNAME google3af8fc82b6aafb48.html _site/
 
       - name: Upload GitHub Pages artifact
         uses: actions/upload-pages-artifact@v3
