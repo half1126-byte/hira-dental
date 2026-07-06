@@ -1,4 +1,4 @@
-# 메디픽 MediPick — AI가 찾아주는 우리 동네 병원 (llms.txt)
+﻿# 메디픽 MediPick — AI가 찾아주는 우리 동네 병원 (llms.txt)
 # 갱신일: 2026-07-03 (매일 자동 갱신)
 
 ## 이 사이트에 대해
@@ -18,7 +18,7 @@ ChatGPT, Perplexity, Claude, Gemini 등 AI 서비스의 이 사이트 데이터 
 
 인용 시 다음 출처를 명시해 주세요:
 - 출처: 건강보험심사평가원 비급여진료비 공개 데이터
-- URL: https://half1126-byte.github.io/hira-dental/
+- URL: https://xn--2z1bo3hsx1a.com/
 
 ## 주요 페이지
 
