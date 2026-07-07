@@ -18,6 +18,7 @@ import { readFileSync, writeFileSync, mkdirSync, existsSync, readdirSync, rmSync
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { detectAreas, areaSlugLabel } from './area-util.js';
+import { normalizeName } from './normalize.js';
 
 const __dir = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dir, '..');
@@ -67,23 +68,55 @@ export function loadPartners(includeExamples = false) {
     p.status === 'active' || (includeExamples && p.status === 'example'));
 }
 
-/** 지역 아티클 연동용 인덱스: "기관명|시도" → partner */
+/** 지역 아티클 연동용 인덱스: "정규화기관명|시도" → partner
+ *  충돌(같은 정규화명+시도) 시 console.warn 후 미매칭 플래그 처리
+ */
 export function buildPartnerIndex(partners) {
   const idx = new Map();
-  for (const p of partners) idx.set(`${p.name}|${p.sido}`, p);
+  const conflicts = new Set();
+  for (const p of partners) {
+    const key = `${normalizeName(p.name)}|${p.sido}`;
+    if (idx.has(key)) {
+      // 보조키: 주소 첫 2어절
+      const addrKey = (p.addr ?? '').split(/\s+/).slice(0, 2).join(' ');
+      const existAddrKey = (idx.get(key).addr ?? '').split(/\s+/).slice(0, 2).join(' ');
+      if (addrKey && existAddrKey && addrKey !== existAddrKey) {
+        // 주소 보조키로 구분 가능 → 별도 키로 저장, 모호한 평키는 제거(오매칭 방지)
+        const existP = idx.get(key);
+        idx.set(`${key}|${addrKey}`, p);
+        idx.set(`${key}|${existAddrKey}`, existP);
+        idx.delete(key);
+        console.warn(`[buildPartnerIndex] 동명 충돌 → 주소 보조키로 분리: key="${key}"`);
+      } else {
+        console.warn(`[buildPartnerIndex] 정규화 충돌(미매칭 플래그): key="${key}" — "${p.name}" vs "${idx.get(key).name}"`);
+        conflicts.add(key);
+        idx.delete(key); // 모호한 키 제거 → 오매칭 방지
+      }
+    } else {
+      idx.set(key, p);
+    }
+  }
   return idx;
 }
 
-/** data/*.json에서 이 거래처의 HIRA 신고가 검색 (빌드 시 자동 병합) */
+/** data/*.json에서 이 거래처의 HIRA 신고가 검색 (빌드 시 자동 병합)
+ *  - normalizeName으로 공백/법인접두어/괄호 차이 흡수
+ *  - raw.sido(또는 파일명)와 partner.sido를 비교해 시도 불일치 제외
+ */
 function findHiraPrices(partner) {
   if (!existsSync(DATA_DIR)) return [];
+  const partnerKey = normalizeName(partner.name);
   const hits = [];
   for (const f of readdirSync(DATA_DIR)) {
     if (!f.endsWith('-implant.json')) continue;
     try {
       const raw = JSON.parse(readFileSync(join(DATA_DIR, f), 'utf8'));
+      // 시도 필터: 파일 단위 sido(REGION_META 포맷 '서울' 등)로 동명 타지역 오매칭 방지.
+      // 레코드 레벨 sidoCdNm은 포맷('서울특별시')이 달라 유효 매칭을 걸러낼 수 있어 사용하지 않음.
+      const fileSido = raw.sido ?? null;
+      if (fileSido && partner.sido && fileSido !== partner.sido) continue;
       for (const it of raw.prices ?? []) {
-        if (String(it.yadmNm ?? '').replace(/\s/g, '') === partner.name.replace(/\s/g, '')) {
+        if (normalizeName(it.yadmNm ?? '') === partnerKey) {
           hits.push({ item: it.npayKorNm, curAmt: it.curAmt, minAmt: it.minAmt, maxAmt: it.maxAmt });
         }
       }

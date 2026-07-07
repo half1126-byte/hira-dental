@@ -10,6 +10,7 @@ import { readFileSync, writeFileSync, mkdirSync, existsSync, readdirSync } from 
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadPartners, buildPartnerIndex } from './gen-partners.js';
+import { normalizeName } from './normalize.js';
 
 const __dir = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dir, '..');
@@ -24,9 +25,14 @@ const LAW_HARD = ['최고', '1위', '최저가', '유일', '완치', '보장', '
 // 거래처(제휴) 인덱스: "기관명|시도" → partner (모듈 로드 시 1회)
 const PARTNER_IDX = buildPartnerIndex(loadPartners());
 
-/** 해당 병원이 거래처면 프로필 URL 반환 */
-function partnerUrl(yadmNm, sidoNm) {
-  const p = PARTNER_IDX.get(`${String(yadmNm ?? '').trim()}|${sidoNm}`);
+/** 해당 병원이 거래처면 프로필 URL 반환 (동명 충돌 시 주소 첫 2어절 보조키로 재조회) */
+function partnerUrl(yadmNm, sidoNm, addr) {
+  const key = `${normalizeName(yadmNm)}|${sidoNm}`;
+  let p = PARTNER_IDX.get(key);
+  if (!p && addr) {
+    const addrKey = String(addr).split(/\s+/).slice(0, 2).join(' ');
+    if (addrKey) p = PARTNER_IDX.get(`${key}|${addrKey}`);
+  }
   return p ? `${BASE_URL}/clinics/${p.id}/` : null;
 }
 
@@ -106,8 +112,8 @@ function computeSgguStats(clinics) {
 /** 병원 카드 HTML (아티클용 — 개별 상세 섹션) */
 function buildClinicSection(clinic, rank, sidoNm) {
   const name = clinic.yadmNm ?? '이름 미상';
-  const pUrl = partnerUrl(name, sidoNm);
   const addr = clinic.addr ?? '';
+  const pUrl = partnerUrl(name, sidoNm, addr);
   const tel = clinic.telno ?? '';
   const price = formatPrice(clinic.curAmt);
   const minP = formatPrice(clinic.minAmt);
@@ -140,7 +146,7 @@ function buildClinicSection(clinic, rank, sidoNm) {
 function buildCompareTable(clinics, sidoNm) {
   if (!clinics.length) return '';
   const rows = clinics.slice(0, 10).map((c, i) => {
-    const pUrl = partnerUrl(c.yadmNm, sidoNm);
+    const pUrl = partnerUrl(c.yadmNm, sidoNm, c.addr);
     return `
     <tr>
       <td>${i + 1}</td>
