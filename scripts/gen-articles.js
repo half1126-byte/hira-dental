@@ -87,6 +87,22 @@ function formatPrice(amt) {
   return Number(amt).toLocaleString('ko-KR') + '원';
 }
 
+/** 시군구 통계 (아티클 전용 — 시도 집계인 gen-index.js의 computeStats와 별개) */
+function computeSgguStats(clinics) {
+  const prices = clinics.map(c => Number(c.curAmt)).filter(n => n > 0);
+  if (!prices.length) return { count: 0, mean: null, median: null, min: null, max: null };
+  const sorted = [...prices].sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  const medianVal = sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+  return {
+    count: prices.length,
+    mean: Math.round(prices.reduce((a, b) => a + b, 0) / prices.length),
+    median: Math.round(medianVal),
+    min: sorted[0],
+    max: sorted[sorted.length - 1],
+  };
+}
+
 /** 병원 카드 HTML (아티클용 — 개별 상세 섹션) */
 function buildClinicSection(clinic, rank, sidoNm) {
   const name = clinic.yadmNm ?? '이름 미상';
@@ -156,12 +172,16 @@ function buildCompareTable(clinics, sidoNm) {
 }
 
 /** FAQ HTML + FAQPage JSON-LD */
-function buildFaq(sgguNm, sidoNm) {
+function buildFaq(sgguNm, sidoNm, stats, dataMonth) {
   const location = `${sidoNm} ${sgguNm}`;
+  const hasStats = stats && stats.count >= 3 && stats.mean && stats.median;
+  const faq1a = hasStats
+    ? `HIRA ${dataMonth} 신고 데이터 기준, ${location} 임플란트 평균 ${stats.mean.toLocaleString('ko-KR')}원(중앙값 ${stats.median.toLocaleString('ko-KR')}원, 범위 ${stats.min.toLocaleString('ko-KR')}~${stats.max.toLocaleString('ko-KR')}원, 표본 ${stats.count}개 기관). 이 페이지에서 HIRA 공개 데이터를 기준으로 실제 신고 가격을 확인하실 수 있습니다. 반드시 방문 전 해당 의료기관에 직접 확인하시길 권장합니다.`
+    : `건강보험심사평가원에 신고된 ${location} 치과병원의 임플란트 비급여 가격은 표본 ${stats ? stats.count : 0}개 기관 신고가 기준으로 공개되어 있습니다. 이 페이지에서 HIRA 공개 데이터를 기준으로 실제 신고 가격을 확인하실 수 있습니다. 반드시 방문 전 해당 의료기관에 직접 확인하시길 권장합니다.`;
   const faqs = [
     {
       q: `${location} 임플란트 비급여 가격은 어느 정도인가요?`,
-      a: `건강보험심사평가원에 신고된 ${location} 치과병원의 임플란트 비급여 가격은 기관마다 다릅니다. 이 페이지에서 HIRA 공개 데이터를 기준으로 실제 신고 가격을 확인하실 수 있습니다. 반드시 방문 전 해당 의료기관에 직접 확인하시길 권장합니다.`,
+      a: faq1a,
     },
     {
       q: '임플란트 비급여 신고 가격과 실제 진료비는 다를 수 있나요?',
@@ -205,9 +225,10 @@ function buildFaq(sgguNm, sidoNm) {
 }
 
 /** 아티클 JSON-LD (Article + BreadcrumbList) */
-function buildArticleJsonLd(sgguNm, sidoNm, sidoEn, sgguSlug, clinics, buildDate) {
+function buildArticleJsonLd(sgguNm, sidoNm, sidoEn, sgguSlug, clinics, buildDate, stats) {
   const url = `${BASE_URL}/articles/${sidoEn}-${sgguSlug}-implant/`;
   const title = `${sidoNm} ${sgguNm} 임플란트 치과 가격 정보 (HIRA 공개 데이터 ${buildDate} 기준)`;
+  const month = buildDate.slice(0, 7); // YYYY-MM
 
   const breadcrumb = {
     '@context': 'https://schema.org',
@@ -234,6 +255,7 @@ function buildArticleJsonLd(sgguNm, sidoNm, sidoEn, sgguSlug, clinics, buildDate
       url: `${BASE_URL}/`,
     },
     mainEntityOfPage: { '@type': 'WebPage', '@id': url },
+    isBasedOn: `${BASE_URL}/price-index/${month}/`,
   };
 
   return { breadcrumb, article, url, title };
@@ -241,13 +263,22 @@ function buildArticleJsonLd(sgguNm, sidoNm, sidoEn, sgguSlug, clinics, buildDate
 
 /** 아티클 HTML 전체 생성 */
 function generateArticleHtml(clinics, sgguNm, sidoNm, sidoEn, sgguSlug, buildDate) {
-  const { faqHtml, faqJsonLd } = buildFaq(sgguNm, sidoNm);
-  const { breadcrumb, article, url, title } = buildArticleJsonLd(sgguNm, sidoNm, sidoEn, sgguSlug, clinics, buildDate);
+  const stats = computeSgguStats(clinics);
+  const dataMonth = buildDate.slice(0, 7); // YYYY-MM
+  const hasStats = stats.count >= 3 && stats.mean && stats.median;
+
+  // self-contained 통계 문장 (AI 인용 대상)
+  const statSentence = hasStats
+    ? `HIRA ${dataMonth} 신고 데이터 기준, ${sidoNm} ${sgguNm} 임플란트 평균 ${stats.mean.toLocaleString('ko-KR')}원(중앙값 ${stats.median.toLocaleString('ko-KR')}원, 범위 ${stats.min.toLocaleString('ko-KR')}~${stats.max.toLocaleString('ko-KR')}원, 표본 ${stats.count}개 기관)`
+    : `HIRA ${dataMonth} 신고 데이터 기준, ${sidoNm} ${sgguNm} 임플란트 표본 ${stats.count}개 기관 신고가 기준`;
+
+  const { faqHtml, faqJsonLd } = buildFaq(sgguNm, sidoNm, stats, dataMonth);
+  const { breadcrumb, article, url, title } = buildArticleJsonLd(sgguNm, sidoNm, sidoEn, sgguSlug, clinics, buildDate, stats);
   const compareTable = buildCompareTable(clinics, sidoNm);
   const clinicSections = clinics.slice(0, 8).map((c, i) => buildClinicSection(c, i + 1, sidoNm)).join('');
-  const avgPrice = clinics.length
-    ? Math.round(clinics.reduce((s, c) => s + Number(c.curAmt || 0), 0) / clinics.filter(c => c.curAmt).length)
-    : 0;
+
+  // meta description: self-contained 문장
+  const metaDesc = `${statSentence}. 신고 기준가, 연락처, 주소 포함.`;
 
   return `<!DOCTYPE html>
 <html lang="ko">
@@ -256,7 +287,7 @@ function generateArticleHtml(clinics, sgguNm, sidoNm, sidoEn, sgguSlug, buildDat
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="robots" content="index, follow">
   <title>${title}</title>
-  <meta name="description" content="건강보험심사평가원(HIRA) 비급여 공개 데이터 기반 ${sidoNm} ${sgguNm} 임플란트 치과 가격 정보 ${clinics.length}곳. 신고 기준가, 연락처, 주소 포함.">
+  <meta name="description" content="${metaDesc}">
   <meta property="og:type" content="article">
   <meta property="og:title" content="${title}">
   <meta property="og:description" content="건강보험심사평가원 데이터 기반 ${sidoNm} ${sgguNm} 임플란트 가격 정보">
@@ -307,12 +338,26 @@ function generateArticleHtml(clinics, sgguNm, sidoNm, sidoEn, sgguSlug, buildDat
   <!-- 핵심 결과 -->
   <section class="key-result-section">
     <h2>핵심 정보 요약</h2>
-    <p>
-      건강보험심사평가원이 공개한 비급여 진료비 신고 데이터 기준으로,
-      <strong>${sidoNm} ${sgguNm}</strong>에서 임플란트 비급여 가격을 신고한 치과병원은
-      <strong>${clinics.length}곳</strong>입니다.
-      ${avgPrice ? `신고 기준 평균 가격은 <strong>${avgPrice.toLocaleString('ko-KR')}원</strong> 수준입니다.` : ''}
-    </p>
+    <p>${statSentence}.</p>
+    ${hasStats ? `
+    <div class="stat-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:0.75rem;margin:1rem 0">
+      <div class="stat-card" style="background:var(--bg-card,#f8f8fb);border-radius:8px;padding:0.75rem 1rem;text-align:center">
+        <div style="font-size:.75rem;color:#666">평균</div>
+        <div style="font-weight:700;font-size:1.05rem">${stats.mean.toLocaleString('ko-KR')}원</div>
+      </div>
+      <div class="stat-card" style="background:var(--bg-card,#f8f8fb);border-radius:8px;padding:0.75rem 1rem;text-align:center">
+        <div style="font-size:.75rem;color:#666">중앙값</div>
+        <div style="font-weight:700;font-size:1.05rem">${stats.median.toLocaleString('ko-KR')}원</div>
+      </div>
+      <div class="stat-card" style="background:var(--bg-card,#f8f8fb);border-radius:8px;padding:0.75rem 1rem;text-align:center">
+        <div style="font-size:.75rem;color:#666">범위</div>
+        <div style="font-weight:700;font-size:1.05rem">${stats.min.toLocaleString('ko-KR')}~${stats.max.toLocaleString('ko-KR')}원</div>
+      </div>
+      <div class="stat-card" style="background:var(--bg-card,#f8f8fb);border-radius:8px;padding:0.75rem 1rem;text-align:center">
+        <div style="font-size:.75rem;color:#666">표본</div>
+        <div style="font-weight:700;font-size:1.05rem">${stats.count}개 기관</div>
+      </div>
+    </div>` : ''}
     <div class="notice-box" style="margin-top:1rem">
       <div class="notice-icon">ℹ</div>
       <div class="notice-text">

@@ -45,6 +45,7 @@ function median(arr) {
 /** data/*.json → 지역별 통계. 데이터 없으면 null */
 function computeStats() {
   if (!existsSync(DATA_DIR)) return null;
+  const computedAt = new Date().toISOString();
   const regions = [];
   for (const r of REGIONS) {
     const f = join(DATA_DIR, `${r.en}-implant.json`);
@@ -53,13 +54,18 @@ function computeStats() {
       const prices = (JSON.parse(readFileSync(f, 'utf8')).prices ?? [])
         .map(p => Number(p.curAmt)).filter(n => n > 0);
       if (!prices.length) continue;
+      const mean = Math.round(prices.reduce((a, b) => a + b, 0) / prices.length);
+      const variance = prices.reduce((acc, p) => acc + (p - mean) ** 2, 0) / prices.length;
+      const stdev = Math.round(Math.sqrt(variance));
       regions.push({
         region: r.nm, regionEn: r.en,
         count: prices.length,
         median: median(prices),
-        mean: Math.round(prices.reduce((a, b) => a + b, 0) / prices.length),
+        mean,
+        stdev,
         min: Math.min(...prices),
         max: Math.max(...prices),
+        computedAt,
       });
     } catch { /* skip */ }
   }
@@ -122,6 +128,9 @@ function reportHtml({ month, buildDate, regions, prev, archives, isLatest }) {
     creator: { '@type': 'Organization', name: SITE_NAME, url: `${BASE_URL}/` },
     temporalCoverage: month,
     spatialCoverage: regions.map(r => r.region).join(', '),
+    dateModified: buildDate,
+    variableMeasured: ['임플란트 비급여 신고가 중앙값', '임플란트 비급여 신고가 평균', '임플란트 비급여 신고가 범위', '신고 기관 수'],
+    measurementTechnique: '건강보험심사평가원 비급여 진료비용 공개 API 수집',
     distribution: [{
       '@type': 'DataDownload',
       encodingFormat: 'application/json',
