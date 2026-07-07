@@ -239,8 +239,16 @@ function buildJsonLd(prices, regionNm, regionEn, buildDate) {
       headline: `${regionNm} 임플란트 치과 비급여 가격 비교 (HIRA 공개 데이터)`,
       datePublished: buildDate,
       dateModified: buildDate,
-      author: { '@type': 'Organization', name: '메디앤메디 리서치팀' },
-      publisher: { '@type': 'Organization', name: '한국 치과 비급여 가이드' },
+      author: {
+        '@type': 'Organization',
+        name: '메디픽 MediPick',
+        url: `${BASE_URL}/methodology/`,
+      },
+      publisher: {
+        '@type': 'Organization',
+        name: '메디픽 MediPick',
+        url: `${BASE_URL}/`,
+      },
       about: { '@type': 'MedicalProcedure', name: '치과 임플란트', procedureType: 'Therapeutic' },
       description: `건강보험심사평가원 공개 데이터 기반 ${regionNm} 임플란트 비급여 가격 정보`,
     },
@@ -410,6 +418,92 @@ export function generateDentalHub(buildDate) {
   checkLawHard(html, 'dental/index.html');
   writeFileSync(join(DENTAL, 'index.html'), html);
   console.log('  ✓ dental/index.html (허브)');
+}
+
+/** /methodology/ — 데이터 방법론 페이지 */
+export function generateMethodologyPage(buildDate) {
+  const canonicalPath = '/methodology/';
+  const url = `${BASE_URL}${canonicalPath}`;
+
+  const jsonLd = [
+    {
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: '홈', item: `${BASE_URL}/` },
+        { '@type': 'ListItem', position: 2, name: '데이터 방법론', item: url },
+      ],
+    },
+    {
+      '@context': 'https://schema.org',
+      '@type': 'Article',
+      headline: '데이터 수집 및 방법론 | 메디픽 비급여 가격 허브',
+      datePublished: buildDate,
+      dateModified: buildDate,
+      author: {
+        '@type': 'Organization',
+        name: '메디픽 MediPick',
+        url: url,
+      },
+      publisher: {
+        '@type': 'Organization',
+        name: '메디픽 MediPick',
+        url: `${BASE_URL}/`,
+      },
+      mainEntityOfPage: { '@type': 'WebPage', '@id': url },
+      description: '건강보험심사평가원 공공데이터 기반 비급여 가격 수집·처리·갱신 절차와 한계 고지.',
+    },
+  ].map(s => `<script type="application/ld+json">\n${JSON.stringify(s, null, 2)}\n</script>`).join('\n');
+
+  const body = `
+  <section class="methodology-section">
+    <h2>1. 데이터 수집</h2>
+    <p>건강보험심사평가원(HIRA) 비급여 진료비용 공개 API에서 치과의원·치과병원(clCd=41 계열) 신고 가격을 수집합니다. 해당 데이터는 공공저작물 제1유형(출처표시, 상업적 이용 가능)으로 공개됩니다.</p>
+    <p>원천: <a href="https://www.hira.or.kr" target="_blank" rel="noopener">건강보험심사평가원(HIRA)</a> · <a href="https://www.data.go.kr" target="_blank" rel="noopener">공공데이터포털(data.go.kr)</a></p>
+  </section>
+
+  <section class="methodology-section">
+    <h2>2. 검증 절차</h2>
+    <p>자동 생성되는 모든 문장은 의료광고 금칙어 게이트(빌드 시 자동 검사)를 통과해야 게시됩니다. 위반 항목이 감지되면 빌드가 즉시 중단됩니다. 이를 통해 의료광고법 제56조 준수를 빌드 단계에서 자동으로 검증합니다.</p>
+  </section>
+
+  <section class="methodology-section">
+    <h2>3. 한계 고지</h2>
+    <p>신고가는 의료기관이 HIRA에 신고한 기준 금액으로, 실제 청구액과 다를 수 있습니다. 재료·추가시술·골이식 등 개별 상황에 따라 실제 비용은 달라질 수 있습니다. 방문 전 해당 의료기관에 직접 확인하시기 바랍니다.</p>
+  </section>
+
+  <section class="methodology-section">
+    <h2>4. 갱신 주기</h2>
+    <p>매일 새벽(KST 01:00) 자동 갱신되며, 월별 가격지수 스냅샷이 보존됩니다. 페이지 상단의 기준일자가 가장 최근 갱신 시점입니다.</p>
+  </section>
+
+  <section class="methodology-section">
+    <h2>5. 독립 큐레이션 고지</h2>
+    <p>본 사이트의 모든 가격·통계는 HIRA 공공데이터에서 자동 산출되며, 개별 의료기관이 내용을 편집하거나 게재 여부에 관여할 수 없습니다. 특정 의료기관과의 제휴 여부와 무관하게 동일한 기준으로 표시됩니다.</p>
+  </section>
+
+  <div class="notice-box" style="margin-top:2rem">
+    <div class="notice-icon">ℹ</div>
+    <div class="notice-text">궁금하신 사항은 건강보험심사평가원 공식 사이트 또는 해당 의료기관에 직접 문의하시기 바랍니다.</div>
+  </div>
+`;
+
+  const html = pageShell({
+    title: '데이터 수집 및 방법론 | 메디픽 비급여 가격 허브',
+    desc: '건강보험심사평가원 공공데이터 기반 비급여 가격 수집·처리·갱신 절차와 한계 고지.',
+    canonicalPath,
+    heroTitle: '데이터 수집 및 방법론',
+    heroSub: 'HIRA 공공데이터 기반 자동 산출',
+    buildDate,
+    body: body + '\n' + jsonLd,
+  });
+
+  checkLawHard(html, 'methodology/index.html');
+
+  const outDir = join(ROOT, 'methodology');
+  mkdirSync(outDir, { recursive: true });
+  writeFileSync(join(outDir, 'index.html'), html);
+  console.log('  ✓ methodology/index.html 생성');
 }
 
 /** /dental/compare/ — 전국 비교 페이지 */

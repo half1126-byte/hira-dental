@@ -248,7 +248,11 @@ function buildArticleJsonLd(sgguNm, sidoNm, sidoEn, sgguSlug, clinics, buildDate
     description: `건강보험심사평가원 비급여 데이터 기반 ${sidoNm} ${sgguNm} 임플란트 가격 정보. ${clinics.length}개 기관 신고가 공개.`,
     datePublished: buildDate,
     dateModified: buildDate,
-    author: { '@type': 'Organization', name: SITE_NAME },
+    author: {
+      '@type': 'Organization',
+      name: SITE_NAME,
+      url: `${BASE_URL}/methodology/`,
+    },
     publisher: {
       '@type': 'Organization',
       name: SITE_NAME,

@@ -8,7 +8,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { fetchImplantPrices, fetchDentalHospList, fetchNationwideStats, SIDO } from './fetch-hira.js';
-import { generateRegionPage, generateSitemap, generateDentalHub, generateComparePage } from './gen-pages.js';
+import { generateRegionPage, generateSitemap, generateDentalHub, generateComparePage, generateMethodologyPage } from './gen-pages.js';
 import { generateAllArticlesForSido, generateArticlesIndex, REGION_META } from './gen-articles.js';
 import { generateAllPartnerPages } from './gen-partners.js';
 import { enrichPartners } from './enrich-partners.js';
@@ -96,10 +96,11 @@ async function main() {
     }
   }
 
-  // 2.5 치과 허브 + 전국 비교 페이지
+  // 2.5 치과 허브 + 전국 비교 페이지 + 방법론 페이지
   try {
     generateDentalHub(BUILD_DATE);
     generateComparePage(BUILD_DATE);
+    generateMethodologyPage(BUILD_DATE);
   } catch (e) {
     console.error(`  ✗ 허브/비교 페이지 생성 실패: ${e.message}`);
     process.exit(1);
@@ -186,6 +187,7 @@ async function main() {
     [
       { path: '/', priority: '1.0', freq: 'daily' },
       { path: '/dental/', priority: '0.9', freq: 'weekly' },
+      { path: '/methodology/', priority: '0.7', freq: 'monthly' },
       ...generatedPages,
       { path: '/dental/compare/', priority: '0.8', freq: 'weekly' },
       { path: '/articles/', priority: '0.8', freq: 'weekly' },
