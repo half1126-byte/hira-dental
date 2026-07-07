@@ -52,6 +52,9 @@ export const SIDO = {
   세종: '410000',
 };
 
+// 시술별 메타 — 정의는 site-config.js (키 없이도 로드 가능한 중립 모듈)
+export { PROCEDURES } from './site-config.js';
+
 // 진료과별 clCd + 항목 키워드 매핑
 export const SPECIALTIES = {
   dental: {
@@ -136,12 +139,9 @@ export async function fetchNonPayItems(sidoNm, clCd, keywords = [], maxRows = 20
 }
 
 /**
- * 치과 임플란트 가격 조회 (치과병원, clCd=41)
+ * 중복 제거(요양기관명+주소) + curAmt 오름차순 정렬 헬퍼
  */
-export async function fetchImplantPrices(sidoNm) {
-  const items = await fetchNonPayItems(sidoNm, '41', ['임플란트']);
-
-  // 중복 제거 (요양기관명+주소)
+export function dedupeAndSort(items) {
   const seen = new Set();
   const deduped = items.filter(it => {
     const key = `${it.yadmNm}|${it.addr}`;
@@ -149,10 +149,16 @@ export async function fetchImplantPrices(sidoNm) {
     seen.add(key);
     return true;
   });
-
-  // 현재가 오름차순
   deduped.sort((a, b) => Number(a.curAmt ?? 9999999) - Number(b.curAmt ?? 9999999));
   return deduped;
+}
+
+/**
+ * 치과 임플란트 가격 조회 (치과병원, clCd=41)
+ */
+export async function fetchImplantPrices(sidoNm) {
+  const items = await fetchNonPayItems(sidoNm, '41', ['임플란트']);
+  return dedupeAndSort(items);
 }
 
 /**

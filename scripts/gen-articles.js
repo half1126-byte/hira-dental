@@ -17,7 +17,7 @@ const ROOT = join(__dir, '..');
 const DATA_DIR = join(ROOT, 'data');
 const OUT_DIR = join(ROOT, 'articles');
 
-import { BASE_URL } from './site-config.js';
+import { BASE_URL, PROCEDURES } from './site-config.js';
 const SITE_NAME = '메디픽 MediPick';
 
 const LAW_HARD = ['최고', '1위', '최저가', '유일', '완치', '보장', '100%', '최상급', '명품', '무통'];
@@ -177,39 +177,52 @@ function buildCompareTable(clinics, sidoNm) {
   </table>`;
 }
 
-/** FAQ HTML + FAQPage JSON-LD */
-function buildFaq(sgguNm, sidoNm, stats, dataMonth) {
+/** FAQ HTML + FAQPage JSON-LD — proc별 분기 */
+function buildFaq(sgguNm, sidoNm, stats, dataMonth, proc) {
   const location = `${sidoNm} ${sgguNm}`;
   const hasStats = stats && stats.count >= 3 && stats.mean && stats.median;
-  const faq1a = hasStats
-    ? `HIRA ${dataMonth} 신고 데이터 기준, ${location} 임플란트 평균 ${stats.mean.toLocaleString('ko-KR')}원(중앙값 ${stats.median.toLocaleString('ko-KR')}원, 범위 ${stats.min.toLocaleString('ko-KR')}~${stats.max.toLocaleString('ko-KR')}원, 표본 ${stats.count}개 기관). 이 페이지에서 HIRA 공개 데이터를 기준으로 실제 신고 가격을 확인하실 수 있습니다. 반드시 방문 전 해당 의료기관에 직접 확인하시길 권장합니다.`
-    : `건강보험심사평가원에 신고된 ${location} 치과병원의 임플란트 비급여 가격은 표본 ${stats ? stats.count : 0}개 기관 신고가 기준으로 공개되어 있습니다. 이 페이지에서 HIRA 공개 데이터를 기준으로 실제 신고 가격을 확인하실 수 있습니다. 반드시 방문 전 해당 의료기관에 직접 확인하시길 권장합니다.`;
-  const faqs = [
-    {
-      q: `${location} 임플란트 비급여 가격은 어느 정도인가요?`,
-      a: faq1a,
-    },
-    {
-      q: '임플란트 비급여 신고 가격과 실제 진료비는 다를 수 있나요?',
-      a: 'HIRA에 신고된 비급여 가격은 의료기관이 제출한 기준 가격이며, 뼈이식 여부·상부구조물 종류·임시치아 등 추가 항목에 따라 실제 총 진료비가 달라질 수 있습니다. 상담 시 전체 항목별 비용을 사전에 안내받는 것이 중요합니다.',
-    },
-    {
-      q: '임플란트 치료 기간은 얼마나 걸리나요?',
-      a: '일반적으로 발치 후 골유착 기간 포함 3~6개월, 뼈이식이 필요한 경우 6~12개월 이상 소요될 수 있습니다. 개인의 골밀도·잇몸 상태에 따라 달라지므로 정확한 기간은 진료 후 결정됩니다.',
-    },
-    {
-      q: '임플란트에 건강보험이 적용되나요?',
-      a: '만 65세 이상은 평생 최대 2개까지 건강보험이 적용되어 본인부담금이 줄어듭니다. 그 외 연령대나 추가 임플란트는 비급여 항목이므로 의료기관 신고가 기준으로 비용이 결정됩니다.',
-    },
-    {
-      q: '치과 방문 전 확인할 사항이 있나요?',
-      a: '구강악안면외과·치주과 전문의 여부, 임플란트 보증 기간·사후관리 방침, 파노라마·CT 장비 보유 여부, 비급여 항목별 사전 비용 고지 여부를 확인하시기 바랍니다.',
-    },
-    {
-      q: 'HIRA 비급여 데이터는 얼마나 자주 업데이트되나요?',
-      a: '건강보험심사평가원은 의료기관으로부터 비급여 가격을 정기적으로 수집합니다. 이 사이트는 HIRA 공개 API를 통해 데이터를 자동으로 갱신합니다. 가장 정확한 최신 정보는 심평원 홈페이지(www.hira.or.kr) 또는 해당 의료기관에 직접 문의하세요.',
-    },
-  ];
+
+  // 신고가≠실청구가 공통 답변 (임플란트·크라운·스케일링 공유)
+  const implantSignedVsActual = 'HIRA에 신고된 비급여 가격은 의료기관이 제출한 기준 가격이며, 뼈이식 여부·상부구조물 종류·임시치아 등 추가 항목에 따라 실제 총 진료비가 달라질 수 있습니다. 상담 시 전체 항목별 비용을 사전에 안내받는 것이 중요합니다.';
+  const signedVsActualScaling = 'HIRA에 신고된 비급여 가격은 의료기관이 제출한 기준 가격이며, 실제 청구금액은 추가 처치 여부·장비 사용 등에 따라 달라질 수 있습니다. 상담 시 전체 항목별 비용을 사전에 안내받는 것이 중요합니다.';
+
+  let faqs;
+
+  if (proc.slug === 'implant') {
+    // 기존 임플란트 FAQ — 문구 완전 동일 유지
+    const faq1a = hasStats
+      ? `HIRA ${dataMonth} 신고 데이터 기준, ${location} 임플란트 평균 ${stats.mean.toLocaleString('ko-KR')}원(중앙값 ${stats.median.toLocaleString('ko-KR')}원, 범위 ${stats.min.toLocaleString('ko-KR')}~${stats.max.toLocaleString('ko-KR')}원, 표본 ${stats.count}개 기관). 이 페이지에서 HIRA 공개 데이터를 기준으로 실제 신고 가격을 확인하실 수 있습니다. 반드시 방문 전 해당 의료기관에 직접 확인하시길 권장합니다.`
+      : `건강보험심사평가원에 신고된 ${location} 치과병원의 임플란트 비급여 가격은 표본 ${stats ? stats.count : 0}개 기관 신고가 기준으로 공개되어 있습니다. 이 페이지에서 HIRA 공개 데이터를 기준으로 실제 신고 가격을 확인하실 수 있습니다. 반드시 방문 전 해당 의료기관에 직접 확인하시길 권장합니다.`;
+    faqs = [
+      { q: `${location} 임플란트 비급여 가격은 어느 정도인가요?`, a: faq1a },
+      { q: '임플란트 비급여 신고 가격과 실제 진료비는 다를 수 있나요?', a: implantSignedVsActual },
+      { q: '임플란트 치료 기간은 얼마나 걸리나요?', a: '일반적으로 발치 후 골유착 기간 포함 3~6개월, 뼈이식이 필요한 경우 6~12개월 이상 소요될 수 있습니다. 개인의 골밀도·잇몸 상태에 따라 달라지므로 정확한 기간은 진료 후 결정됩니다.' },
+      { q: '임플란트에 건강보험이 적용되나요?', a: '만 65세 이상은 평생 최대 2개까지 건강보험이 적용되어 본인부담금이 줄어듭니다. 그 외 연령대나 추가 임플란트는 비급여 항목이므로 의료기관 신고가 기준으로 비용이 결정됩니다.' },
+      { q: '치과 방문 전 확인할 사항이 있나요?', a: '구강악안면외과·치주과 전문의 여부, 임플란트 보증 기간·사후관리 방침, 파노라마·CT 장비 보유 여부, 비급여 항목별 사전 비용 고지 여부를 확인하시기 바랍니다.' },
+      { q: 'HIRA 비급여 데이터는 얼마나 자주 업데이트되나요?', a: '건강보험심사평가원은 의료기관으로부터 비급여 가격을 정기적으로 수집합니다. 이 사이트는 HIRA 공개 API를 통해 데이터를 자동으로 갱신합니다. 가장 정확한 최신 정보는 심평원 홈페이지(www.hira.or.kr) 또는 해당 의료기관에 직접 문의하세요.' },
+    ];
+  } else if (proc.slug === 'crown') {
+    const faq1a = hasStats
+      ? `HIRA ${dataMonth} 신고 데이터 기준, ${location} 크라운(지르코니아) 평균 ${stats.mean.toLocaleString('ko-KR')}원(중앙값 ${stats.median.toLocaleString('ko-KR')}원, 범위 ${stats.min.toLocaleString('ko-KR')}~${stats.max.toLocaleString('ko-KR')}원, 표본 ${stats.count}개 기관). 이 페이지에서 HIRA 공개 데이터를 기준으로 실제 신고 가격을 확인하실 수 있습니다. 반드시 방문 전 해당 의료기관에 직접 확인하시길 권장합니다.`
+      : `건강보험심사평가원에 신고된 ${location} 치과병원의 크라운(지르코니아) 비급여 가격은 표본 ${stats ? stats.count : 0}개 기관 신고가 기준으로 공개되어 있습니다. 이 페이지에서 HIRA 공개 데이터를 기준으로 실제 신고 가격을 확인하실 수 있습니다. 반드시 방문 전 해당 의료기관에 직접 확인하시길 권장합니다.`;
+    faqs = [
+      { q: `${location} 크라운 비급여 가격은 어느 정도인가요?`, a: faq1a },
+      { q: '크라운은 재질에 따라 가격이 다른가요?', a: '지르코니아·금(Gold)·PFM 등 재질에 따라 신고 가격이 다릅니다. 이 페이지의 통계는 지르코니아 크라운 신고가 기준입니다. 재질별 비용은 의료기관에 직접 확인하시기 바랍니다.' },
+      { q: '크라운 치료에 건강보험이 적용되나요?', a: '크라운(보철)은 대부분 비급여 항목으로, 의료기관이 신고한 금액 기준으로 비용이 결정됩니다. 급여 적용 여부는 치아 상태와 치료 목적에 따라 다를 수 있으므로 의료기관에 확인하시기 바랍니다.' },
+      { q: '크라운 비급여 신고 가격과 실제 진료비는 다를 수 있나요?', a: implantSignedVsActual },
+    ];
+  } else {
+    // scaling
+    const faq1a = hasStats
+      ? `HIRA ${dataMonth} 신고 데이터 기준, ${location} 스케일링(치석제거·전악) 평균 ${stats.mean.toLocaleString('ko-KR')}원(중앙값 ${stats.median.toLocaleString('ko-KR')}원, 범위 ${stats.min.toLocaleString('ko-KR')}~${stats.max.toLocaleString('ko-KR')}원, 표본 ${stats.count}개 기관). 이 페이지에서 HIRA 공개 데이터를 기준으로 실제 신고 가격을 확인하실 수 있습니다. 반드시 방문 전 해당 의료기관에 직접 확인하시길 권장합니다.`
+      : `건강보험심사평가원에 신고된 ${location} 치과병원의 스케일링(치석제거·전악) 비급여 가격은 표본 ${stats ? stats.count : 0}개 기관 신고가 기준으로 공개되어 있습니다. 이 페이지에서 HIRA 공개 데이터를 기준으로 실제 신고 가격을 확인하실 수 있습니다. 반드시 방문 전 해당 의료기관에 직접 확인하시길 권장합니다.`;
+    faqs = [
+      { q: `${location} 스케일링(치석제거) 비급여 가격은 어느 정도인가요?`, a: faq1a },
+      { q: '스케일링은 건강보험이 적용되지 않나요?', a: '만 19세 이상은 연 1회 치석제거(전악)에 건강보험이 적용됩니다. 연 1회를 초과하거나 급여 기준에 해당하지 않는 경우 비급여로 진행될 수 있으며, 이 페이지는 비급여 신고가 기준입니다.' },
+      { q: '비급여 스케일링 가격은 왜 기관마다 다른가요?', a: '비급여 항목은 의료기관이 자율적으로 금액을 정해 신고합니다. 시술 범위(전악·부분악)와 장비, 부가 처치에 따라 차이가 있을 수 있습니다.' },
+      { q: '스케일링 비급여 신고 가격과 실제 진료비는 다를 수 있나요?', a: signedVsActualScaling },
+    ];
+  }
 
   const faqHtml = faqs.map(f => `
     <details class="faq-item">
@@ -230,28 +243,42 @@ function buildFaq(sgguNm, sidoNm, stats, dataMonth) {
   return { faqHtml, faqJsonLd };
 }
 
-/** 아티클 JSON-LD (Article + BreadcrumbList) */
-function buildArticleJsonLd(sgguNm, sidoNm, sidoEn, sgguSlug, clinics, buildDate, stats) {
-  const url = `${BASE_URL}/articles/${sidoEn}-${sgguSlug}-implant/`;
-  const title = `${sidoNm} ${sgguNm} 임플란트 치과 가격 정보 (HIRA 공개 데이터 ${buildDate} 기준)`;
+/** 아티클 JSON-LD (Article + BreadcrumbList) — proc별 분기 */
+function buildArticleJsonLd(sgguNm, sidoNm, sidoEn, sgguSlug, clinics, buildDate, stats, proc) {
+  const url = `${BASE_URL}/articles/${sidoEn}-${sgguSlug}-${proc.slug}/`;
+  const title = `${sidoNm} ${sgguNm} ${proc.label} 치과 가격 정보 (HIRA 공개 데이터 ${buildDate} 기준)`;
   const month = buildDate.slice(0, 7); // YYYY-MM
 
-  const breadcrumb = {
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    itemListElement: [
-      { '@type': 'ListItem', position: 1, name: '홈', item: `${BASE_URL}/` },
-      { '@type': 'ListItem', position: 2, name: '치과', item: `${BASE_URL}/dental/` },
-      { '@type': 'ListItem', position: 3, name: `${sidoNm} 임플란트`, item: `${BASE_URL}/dental/${sidoEn}-implant/` },
-      { '@type': 'ListItem', position: 4, name: `${sgguNm} 임플란트`, item: url },
-    ],
-  };
+  let breadcrumb;
+  if (proc.slug === 'implant') {
+    breadcrumb = {
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: '홈', item: `${BASE_URL}/` },
+        { '@type': 'ListItem', position: 2, name: '치과', item: `${BASE_URL}/dental/` },
+        { '@type': 'ListItem', position: 3, name: `${sidoNm} 임플란트`, item: `${BASE_URL}/dental/${sidoEn}-implant/` },
+        { '@type': 'ListItem', position: 4, name: `${sgguNm} 임플란트`, item: url },
+      ],
+    };
+  } else {
+    breadcrumb = {
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: '홈', item: `${BASE_URL}/` },
+        { '@type': 'ListItem', position: 2, name: '치과', item: `${BASE_URL}/dental/` },
+        { '@type': 'ListItem', position: 3, name: '치과 비급여 아티클', item: `${BASE_URL}/articles/` },
+        { '@type': 'ListItem', position: 4, name: `${sgguNm} ${proc.label}`, item: url },
+      ],
+    };
+  }
 
   const article = {
     '@context': 'https://schema.org',
     '@type': 'Article',
     headline: title,
-    description: `건강보험심사평가원 비급여 데이터 기반 ${sidoNm} ${sgguNm} 임플란트 가격 정보. ${clinics.length}개 기관 신고가 공개.`,
+    description: `건강보험심사평가원 비급여 데이터 기반 ${sidoNm} ${sgguNm} ${proc.label} 가격 정보. ${clinics.length}개 기관 신고가 공개.`,
     datePublished: buildDate,
     dateModified: buildDate,
     author: {
@@ -271,24 +298,70 @@ function buildArticleJsonLd(sgguNm, sidoNm, sidoEn, sgguSlug, clinics, buildDate
   return { breadcrumb, article, url, title };
 }
 
-/** 아티클 HTML 전체 생성 */
-function generateArticleHtml(clinics, sgguNm, sidoNm, sidoEn, sgguSlug, buildDate) {
+/** 아티클 HTML 전체 생성 — proc 파라미터로 시술 분기 */
+function generateArticleHtml(clinics, sgguNm, sidoNm, sidoEn, sgguSlug, buildDate, proc) {
   const stats = computeSgguStats(clinics);
   const dataMonth = buildDate.slice(0, 7); // YYYY-MM
   const hasStats = stats.count >= 3 && stats.mean && stats.median;
 
   // self-contained 통계 문장 (AI 인용 대상)
   const statSentence = hasStats
-    ? `HIRA ${dataMonth} 신고 데이터 기준, ${sidoNm} ${sgguNm} 임플란트 평균 ${stats.mean.toLocaleString('ko-KR')}원(중앙값 ${stats.median.toLocaleString('ko-KR')}원, 범위 ${stats.min.toLocaleString('ko-KR')}~${stats.max.toLocaleString('ko-KR')}원, 표본 ${stats.count}개 기관)`
-    : `HIRA ${dataMonth} 신고 데이터 기준, ${sidoNm} ${sgguNm} 임플란트 표본 ${stats.count}개 기관 신고가 기준`;
+    ? `HIRA ${dataMonth} 신고 데이터 기준, ${sidoNm} ${sgguNm} ${proc.label} 평균 ${stats.mean.toLocaleString('ko-KR')}원(중앙값 ${stats.median.toLocaleString('ko-KR')}원, 범위 ${stats.min.toLocaleString('ko-KR')}~${stats.max.toLocaleString('ko-KR')}원, 표본 ${stats.count}개 기관)`
+    : `HIRA ${dataMonth} 신고 데이터 기준, ${sidoNm} ${sgguNm} ${proc.label} 표본 ${stats.count}개 기관 신고가 기준`;
 
-  const { faqHtml, faqJsonLd } = buildFaq(sgguNm, sidoNm, stats, dataMonth);
-  const { breadcrumb, article, url, title } = buildArticleJsonLd(sgguNm, sidoNm, sidoEn, sgguSlug, clinics, buildDate, stats);
+  const { faqHtml, faqJsonLd } = buildFaq(sgguNm, sidoNm, stats, dataMonth, proc);
+  const { breadcrumb, article, url, title } = buildArticleJsonLd(sgguNm, sidoNm, sidoEn, sgguSlug, clinics, buildDate, stats, proc);
   const compareTable = buildCompareTable(clinics, sidoNm);
   const clinicSections = clinics.slice(0, 8).map((c, i) => buildClinicSection(c, i + 1, sidoNm)).join('');
 
   // meta description: self-contained 문장
   const metaDesc = `${statSentence}. 신고 기준가, 연락처, 주소 포함.`;
+
+  // 필터 설명: 시술별
+  const filterDesc = proc.slug === 'implant' ? '임플란트'
+    : proc.slug === 'crown' ? '크라운/Zirconia'
+    : '치석제거/전악';
+
+  // 브레드크럼 HTML + 헤더 nav + 관련 링크 + 푸터: implant는 기존 경로 유지
+  const implantHubPath = `${BASE_URL}/dental/${sidoEn}-implant/`;
+  const relatedHref = proc.slug === 'implant' ? implantHubPath : `${BASE_URL}/articles/`;
+  const relatedLabel = proc.slug === 'implant'
+    ? `${sidoNm} 전체 임플란트 가격 보기`
+    : '치과 비급여 아티클 목록 보기';
+  const relatedBtnLabel = proc.slug === 'implant'
+    ? `${sidoNm} 전체 치과 가격 비교 →`
+    : '아티클 목록 →';
+
+  const breadcrumbHtml = proc.slug === 'implant'
+    ? `<nav class="breadcrumb">
+      <a href="${BASE_URL}/">홈</a> <span>/</span>
+      <a href="${BASE_URL}/dental/">치과</a> <span>/</span>
+      <a href="${implantHubPath}">${sidoNm} 임플란트</a> <span>/</span>
+      <span>${sgguNm}</span>
+    </nav>`
+    : `<nav class="breadcrumb">
+      <a href="${BASE_URL}/">홈</a> <span>/</span>
+      <a href="${BASE_URL}/dental/">치과</a> <span>/</span>
+      <a href="${BASE_URL}/articles/">치과 비급여 아티클</a> <span>/</span>
+      <span>${sgguNm} ${proc.label}</span>
+    </nav>`;
+
+  const headerNavHtml = proc.slug === 'implant'
+    ? `<a href="${implantHubPath}">← ${sidoNm} 임플란트 전체 보기</a>
+      <a href="${BASE_URL}/">홈</a>`
+    : `<a href="${BASE_URL}/articles/">← 아티클 목록</a>
+      <a href="${BASE_URL}/">홈</a>`;
+
+  const footerImplantLink = proc.slug === 'implant'
+    ? `<a href="${implantHubPath}">${sidoNm} 임플란트</a>`
+    : `<a href="${BASE_URL}/articles/">비급여 아티클</a>`;
+
+  // 안내 박스 문구: 시술별
+  const noticeDetail = proc.slug === 'implant'
+    ? '실제 진료비는 뼈이식 여부·상부구조물 종류 등에 따라 달라질 수 있으므로 반드시 방문 전 의료기관에 직접 확인하시기 바랍니다.'
+    : proc.slug === 'crown'
+    ? '실제 진료비는 재질·추가 처치 여부 등에 따라 달라질 수 있으므로 반드시 방문 전 의료기관에 직접 확인하시기 바랍니다.'
+    : '실제 진료비는 시술 범위·추가 처치 여부 등에 따라 달라질 수 있으므로 반드시 방문 전 의료기관에 직접 확인하시기 바랍니다.';
 
   return `<!DOCTYPE html>
 <html lang="ko">
@@ -300,7 +373,7 @@ function generateArticleHtml(clinics, sgguNm, sidoNm, sidoEn, sgguSlug, buildDat
   <meta name="description" content="${metaDesc}">
   <meta property="og:type" content="article">
   <meta property="og:title" content="${title}">
-  <meta property="og:description" content="건강보험심사평가원 데이터 기반 ${sidoNm} ${sgguNm} 임플란트 가격 정보">
+  <meta property="og:description" content="건강보험심사평가원 데이터 기반 ${sidoNm} ${sgguNm} ${proc.label} 가격 정보">
   <meta property="og:url" content="${url}">
   <meta property="og:site_name" content="${SITE_NAME}">
   <meta property="og:locale" content="ko_KR">
@@ -324,21 +397,15 @@ function generateArticleHtml(clinics, sgguNm, sidoNm, sidoEn, sgguSlug, buildDat
   <div class="inner">
     <a class="logo" href="${BASE_URL}/">메디픽</a>
     <nav>
-      <a href="${BASE_URL}/dental/${sidoEn}-implant/">← ${sidoNm} 임플란트 전체 보기</a>
-      <a href="${BASE_URL}/">홈</a>
+      ${headerNavHtml}
     </nav>
   </div>
 </header>
 
 <section class="article-hero">
   <div class="inner">
-    <nav class="breadcrumb">
-      <a href="${BASE_URL}/">홈</a> <span>/</span>
-      <a href="${BASE_URL}/dental/">치과</a> <span>/</span>
-      <a href="${BASE_URL}/dental/${sidoEn}-implant/">${sidoNm} 임플란트</a> <span>/</span>
-      <span>${sgguNm}</span>
-    </nav>
-    <h1>${sidoNm} ${sgguNm} 임플란트 치과 가격 정보</h1>
+    ${breadcrumbHtml}
+    <h1>${sidoNm} ${sgguNm} ${proc.label} 치과 가격 정보</h1>
     <p class="article-sub">건강보험심사평가원(HIRA) 비급여 신고 데이터 기반 · ${clinics.length}개 기관 · ${buildDate} 기준</p>
     <div class="hero-badges">
       <span class="badge badge-hira">HIRA 공개 데이터</span>
@@ -377,8 +444,7 @@ function generateArticleHtml(clinics, sgguNm, sidoNm, sidoEn, sgguSlug, buildDat
       <div class="notice-icon">ℹ</div>
       <div class="notice-text">
         <strong>이 데이터는 병원이 HIRA에 신고한 기준 가격입니다.</strong>
-        실제 진료비는 뼈이식 여부·상부구조물 종류 등에 따라 달라질 수 있으므로
-        반드시 방문 전 의료기관에 직접 확인하시기 바랍니다.
+        ${noticeDetail}
       </div>
     </div>
   </section>
@@ -390,16 +456,16 @@ function generateArticleHtml(clinics, sgguNm, sidoNm, sidoEn, sgguSlug, buildDat
       <li><strong>주 데이터:</strong> 건강보험심사평가원(HIRA) 비급여진료비 공개 API</li>
       <li><strong>기관 종별:</strong> 치과병원(clCd=41) — 의원급은 별도 신고 체계 적용</li>
       <li><strong>지역 필터:</strong> ${sidoNm} ${sgguNm} 소재 기관</li>
-      <li><strong>항목 필터:</strong> 비급여 항목명에 '임플란트' 포함 항목</li>
+      <li><strong>항목 필터:</strong> 비급여 항목명에 '${filterDesc}' 포함 항목</li>
       <li><strong>업데이트:</strong> HIRA API 자동 연동, 매일 갱신</li>
     </ul>
   </section>
 
   <!-- 병원별 상세 -->
   <section class="clinics-detail-section">
-    <h2>${sidoNm} ${sgguNm} 임플란트 HIRA 신고 기관 목록</h2>
+    <h2>${sidoNm} ${sgguNm} ${proc.label} HIRA 신고 기관 목록</h2>
     ${clinics.length === 0
-      ? '<p class="no-data">해당 지역 치과병원 임플란트 신고 데이터가 없습니다.</p>'
+      ? `<p class="no-data">해당 지역 치과병원 ${proc.label} 신고 데이터가 없습니다.</p>`
       : clinicSections
     }
   </section>
@@ -422,7 +488,7 @@ function generateArticleHtml(clinics, sgguNm, sidoNm, sidoEn, sgguSlug, buildDat
       </div>
       <div class="guide-card">
         <h3>비용 사전 고지</h3>
-        <p>임플란트 본체 외 뼈이식·상부보철·임시치아 등 추가 항목 비용을 상담 전에 확인하세요.</p>
+        <p>시술 외 추가 항목 비용을 상담 전에 확인하세요.</p>
       </div>
       <div class="guide-card">
         <h3>장비 보유 여부</h3>
@@ -466,10 +532,10 @@ function generateArticleHtml(clinics, sgguNm, sidoNm, sidoEn, sgguSlug, buildDat
     </div>
   </section>
 
-  <!-- 관련 지역 링크 -->
+  <!-- 관련 링크 -->
   <section class="related-section">
-    <h2>${sidoNm} 전체 임플란트 가격 보기</h2>
-    <a href="${BASE_URL}/dental/${sidoEn}-implant/" class="cta-btn">${sidoNm} 전체 치과 가격 비교 →</a>
+    <h2>${relatedLabel}</h2>
+    <a href="${relatedHref}" class="cta-btn">${relatedBtnLabel}</a>
   </section>
 
 </main>
@@ -478,7 +544,7 @@ function generateArticleHtml(clinics, sgguNm, sidoNm, sidoEn, sgguSlug, buildDat
   <div class="inner">
     <div class="footer-links">
       <a href="${BASE_URL}/">홈</a>
-      <a href="${BASE_URL}/dental/${sidoEn}-implant/">${sidoNm} 임플란트</a>
+      ${footerImplantLink}
       <a href="https://www.hira.or.kr" target="_blank" rel="noopener">HIRA 심평원</a>
     </div>
     <p class="footer-note">건강보험심사평가원 공공데이터 기반 · 의료광고법 제56조 준수 · 특정 의료기관 추천 아님</p>
@@ -498,9 +564,10 @@ function checkLawHard(html, filePath) {
   }
 }
 
-/** 지역 데이터 파일 읽기 */
-function loadRegionData(dataKey) {
-  const dataFile = join(DATA_DIR, `${dataKey}-implant.json`);
+/** 지역 데이터 파일 읽기 — proc.slug별 파일 선택 */
+function loadRegionData(dataKey, proc) {
+  const slug = proc ? proc.slug : 'implant';
+  const dataFile = join(DATA_DIR, `${dataKey}-${slug}.json`);
   if (!existsSync(dataFile)) {
     console.warn(`  ⚠ 데이터 파일 없음: ${dataFile}`);
     return [];
@@ -520,26 +587,29 @@ function groupBySggu(prices) {
   return map;
 }
 
+// 기본 proc (implant) — 하위 호환용
+const PROC_IMPLANT = { key: 'implant', label: '임플란트', slug: 'implant', filter: '임플란트', filterDesc: '임플란트' };
+
 /** 아티클 페이지 생성 (단일 지역 × 시군구) */
-export function generateArticlePage(clinics, sgguNm, sidoNm, sidoEn, buildDate) {
+export function generateArticlePage(clinics, sgguNm, sidoNm, sidoEn, buildDate, proc = PROC_IMPLANT) {
   const sgguSlug = toSlug(sgguNm);
-  const outDir = join(OUT_DIR, `${sidoEn}-${sgguSlug}-implant`);
+  const outDir = join(OUT_DIR, `${sidoEn}-${sgguSlug}-${proc.slug}`);
   mkdirSync(outDir, { recursive: true });
 
-  const html = generateArticleHtml(clinics, sgguNm, sidoNm, sidoEn, sgguSlug, buildDate);
+  const html = generateArticleHtml(clinics, sgguNm, sidoNm, sidoEn, sgguSlug, buildDate, proc);
   const filePath = join(outDir, 'index.html');
 
-  checkLawHard(html, `articles/${sidoEn}-${sgguSlug}-implant/index.html`);
+  checkLawHard(html, `articles/${sidoEn}-${sgguSlug}-${proc.slug}/index.html`);
   writeFileSync(filePath, html, 'utf8');
 
   return { sgguNm, sgguSlug, sidoEn, clinics: clinics.length };
 }
 
 /** 특정 시도의 모든 시군구 아티클 생성 */
-export function generateAllArticlesForSido(dataKey, sidoNm, sidoEn, buildDate, minClinics = 1) {
-  const prices = loadRegionData(dataKey);
+export function generateAllArticlesForSido(dataKey, sidoNm, sidoEn, buildDate, minClinics = 1, proc = PROC_IMPLANT) {
+  const prices = loadRegionData(dataKey, proc);
   if (!prices.length) {
-    console.warn(`  ⚠ ${sidoNm}: 데이터 없음`);
+    console.warn(`  ⚠ ${sidoNm} ${proc.slug}: 데이터 없음`);
     return [];
   }
 
@@ -549,11 +619,11 @@ export function generateAllArticlesForSido(dataKey, sidoNm, sidoEn, buildDate, m
   for (const [sgguNm, clinics] of Object.entries(groups)) {
     if (clinics.length < minClinics) continue;
     try {
-      const r = generateArticlePage(clinics, sgguNm, sidoNm, sidoEn, buildDate);
-      console.log(`  ✓ articles/${sidoEn}-${r.sgguSlug}-implant/ (${r.clinics}개 병원)`);
+      const r = generateArticlePage(clinics, sgguNm, sidoNm, sidoEn, buildDate, proc);
+      console.log(`  ✓ articles/${sidoEn}-${r.sgguSlug}-${proc.slug}/ (${r.clinics}개 병원)`);
       results.push(r);
     } catch (e) {
-      console.error(`  ✗ ${sgguNm} 생성 실패: ${e.message}`);
+      console.error(`  ✗ ${sgguNm} ${proc.slug} 생성 실패: ${e.message}`);
     }
   }
 
@@ -568,33 +638,54 @@ if (process.argv[1]?.endsWith('gen-articles.js')) {
   let totalArticles = 0;
   for (const r of REGION_META) {
     console.log(`\n[${r.sido}] 아티클 생성 중...`);
-    const results = generateAllArticlesForSido(r.dataKey, r.sido, r.sidoEn, BUILD_DATE);
-    totalArticles += results.length;
+    for (const proc of Object.values(PROCEDURES)) {
+      const results = generateAllArticlesForSido(r.dataKey, r.sido, r.sidoEn, BUILD_DATE, 1, proc);
+      totalArticles += results.length;
+    }
   }
 
   console.log(`\n✅ 총 ${totalArticles}개 아티클 생성 완료`);
 }
 
-/** /articles/ — 아티클 목록 페이지 (생성된 아티클 디렉터리 스캔) */
+/** /articles/ — 아티클 목록 페이지 (생성된 아티클 디렉터리 스캔, 시술별 h2 섹션) */
 export function generateArticlesIndex(buildDate) {
   const dirs = readdirSync(OUT_DIR, { withFileTypes: true })
     .filter(d => d.isDirectory())
     .map(d => d.name)
     .sort();
 
-  const items = [];
+  // 시술별 그룹 분류
+  const groups = { implant: [], crown: [], scaling: [] };
   for (const dir of dirs) {
     const f = join(OUT_DIR, dir, 'index.html');
     if (!existsSync(f)) continue;
-    const m = readFileSync(f, 'utf8').match(/<h1>([^<]+)<\/h1>/);
-    items.push({ dir, title: m ? m[1] : dir });
+    const content = readFileSync(f, 'utf8');
+    const m = content.match(/<h1>([^<]+)<\/h1>/);
+    const title = m ? m[1] : dir;
+
+    if (dir.endsWith('-implant')) groups.implant.push({ dir, title });
+    else if (dir.endsWith('-crown')) groups.crown.push({ dir, title });
+    else if (dir.endsWith('-scaling')) groups.scaling.push({ dir, title });
+    else groups.implant.push({ dir, title }); // fallback
   }
 
-  const cards = items.map(it => `
+  const totalCount = groups.implant.length + groups.crown.length + groups.scaling.length;
+
+  function makeCards(items, procLabel) {
+    if (!items.length) return `<p class="no-data">${procLabel} 아티클 준비 중입니다.</p>`;
+    return `<div class="guide-grid">${items.map(it => {
+      // 제목에서 시술 레이블 부분 strip해 지역명만 표시
+      const stripped = it.title
+        .replace(' 임플란트 치과 가격 정보', '')
+        .replace(' 크라운(지르코니아) 치과 가격 정보', '')
+        .replace(' 스케일링(치석제거) 치과 가격 정보', '');
+      return `
     <a class="region-card" href="${BASE_URL}/articles/${it.dir}/">
-      <h3>${it.title.replace(' 임플란트 치과 가격 정보', '')}</h3>
-      <p>임플란트 가격 정보</p>
-    </a>`).join('');
+      <h3>${stripped}</h3>
+      <p>${procLabel} 가격 정보</p>
+    </a>`;
+    }).join('')}</div>`;
+  }
 
   const html = `<!DOCTYPE html>
 <html lang="ko">
@@ -602,8 +693,8 @@ export function generateArticlesIndex(buildDate) {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="robots" content="index, follow">
-  <title>시군구별 임플란트 가격 아티클 ${items.length}개 | HIRA 비급여 데이터</title>
-  <meta name="description" content="서울·경기·부산·인천 ${items.length}개 시군구별 치과 임플란트 비급여 가격 아티클. 건강보험심사평가원 공개 데이터 기반.">
+  <title>시군구별 치과 비급여 가격 아티클 ${totalCount}개 | HIRA 비급여 데이터</title>
+  <meta name="description" content="서울·경기·부산·인천 시군구별 치과 임플란트·크라운·스케일링 비급여 가격 아티클. 건강보험심사평가원 공개 데이터 기반.">
   <link rel="canonical" href="${BASE_URL}/articles/">
   <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" rel="stylesheet">
   <link rel="stylesheet" href="${BASE_URL}/style.css">
@@ -621,13 +712,22 @@ export function generateArticlesIndex(buildDate) {
 </header>
 <section class="article-hero">
   <div class="inner">
-    <h1>시군구별 임플란트 가격 아티클</h1>
-    <p class="article-sub">${items.length}개 지역 · ${buildDate} 기준 · HIRA 공개 데이터</p>
+    <h1>시군구별 치과 비급여 가격 아티클</h1>
+    <p class="article-sub">${totalCount}개 아티클 · ${buildDate} 기준 · HIRA 공개 데이터 · 임플란트·크라운·스케일링</p>
   </div>
 </section>
 <main class="inner article-body">
   <section class="clinics-detail-section">
-    <div class="guide-grid">${cards || '<p class="no-data">아티클 준비 중입니다.</p>'}</div>
+    <h2>임플란트 가격 아티클</h2>
+    ${makeCards(groups.implant, '임플란트')}
+  </section>
+  <section class="clinics-detail-section">
+    <h2>크라운(지르코니아) 가격 아티클</h2>
+    ${makeCards(groups.crown, '크라운(지르코니아)')}
+  </section>
+  <section class="clinics-detail-section">
+    <h2>스케일링(치석제거) 가격 아티클</h2>
+    ${makeCards(groups.scaling, '스케일링(치석제거)')}
   </section>
 </main>
 <footer class="site-footer">
@@ -644,5 +744,5 @@ export function generateArticlesIndex(buildDate) {
 
   checkLawHard(html, 'articles/index.html');
   writeFileSync(join(OUT_DIR, 'index.html'), html, 'utf8');
-  console.log(`  ✓ articles/index.html (목록 ${items.length}건)`);
+  console.log(`  ✓ articles/index.html (목록 ${totalCount}건 — 임플란트 ${groups.implant.length}, 크라운 ${groups.crown.length}, 스케일링 ${groups.scaling.length})`);
 }

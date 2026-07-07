@@ -7,7 +7,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { fetchImplantPrices, fetchDentalHospList, fetchNationwideStats, SIDO } from './fetch-hira.js';
+import { fetchImplantPrices, fetchDentalHospList, fetchNationwideStats, fetchNonPayItems, dedupeAndSort, PROCEDURES, SIDO } from './fetch-hira.js';
 import { generateRegionPage, generateSitemap, generateDentalHub, generateComparePage, generateMethodologyPage } from './gen-pages.js';
 import { generateAllArticlesForSido, generateArticlesIndex, REGION_META } from './gen-articles.js';
 import { generateAllPartnerPages } from './gen-partners.js';
@@ -36,17 +36,34 @@ const REGIONS = [
 
 async function fetchAndSave(nm, en) {
   mkdirSync(DATA, { recursive: true });
-  const dataFile = join(DATA, `${en}-implant.json`);
 
   console.log(`\n[${nm}] 데이터 수집 중...`);
-  const [prices, hospList] = await Promise.all([
-    fetchImplantPrices(nm),
+
+  // 전체 항목 1회 조회 + 병원 목록 병렬
+  const [allItems, hospList] = await Promise.all([
+    fetchNonPayItems(nm, '41', []),
     fetchDentalHospList(nm),
   ]);
 
-  writeFileSync(dataFile, JSON.stringify({ sido: nm, fetchedAt: new Date().toISOString(), prices, hospList }, null, 2));
-  console.log(`  → data/${en}-implant.json 저장 완료 (${prices.length}건)`);
-  return dataFile;
+  const fetchedAt = new Date().toISOString();
+
+  // 3시술 분기 저장
+  for (const proc of Object.values(PROCEDURES)) {
+    const filtered = allItems.filter(it =>
+      String(it.npayKorNm ?? '').includes(proc.filter)
+    );
+    const prices = dedupeAndSort(filtered);
+
+    const payload = proc.slug === 'implant'
+      ? { sido: nm, fetchedAt, prices, hospList }  // 기존 스키마 완전 유지
+      : { sido: nm, fetchedAt, prices };
+
+    const outFile = join(DATA, `${en}-${proc.slug}.json`);
+    writeFileSync(outFile, JSON.stringify(payload, null, 2));
+    console.log(`  → data/${en}-${proc.slug}.json 저장 완료 (${prices.length}건)`);
+  }
+
+  return join(DATA, `${en}-implant.json`);
 }
 
 async function main() {
@@ -110,19 +127,27 @@ async function main() {
   // 3. 아티클 페이지 생성 (시군구별 치과 추천 아티클)
   console.log('\n── 3단계: 아티클 페이지 생성 ──');
   const articlePages = [];
+  const procList = Object.values(PROCEDURES);
   for (const r of REGION_META) {
     console.log(`\n[${r.sido}] 아티클 생성 중...`);
-    try {
-      const results = generateAllArticlesForSido(r.dataKey, r.sido, r.sidoEn, BUILD_DATE, 1);
-      for (const res of results) {
-        articlePages.push({
-          path: `/articles/${res.sidoEn}-${res.sgguSlug}-implant/`,
-          priority: '0.8',
-          freq: 'weekly',
-        });
+    for (const proc of procList) {
+      const dataFile = join(DATA, `${r.dataKey}-${proc.slug}.json`);
+      if (!existsSync(dataFile)) {
+        console.warn(`  ⚠ ${r.sido} ${proc.slug} 데이터 없음 — 스킵`);
+        continue;
       }
-    } catch (e) {
-      console.warn(`  ⚠ ${r.sido} 아티클 생성 오류: ${e.message}`);
+      try {
+        const results = generateAllArticlesForSido(r.dataKey, r.sido, r.sidoEn, BUILD_DATE, 1, proc);
+        for (const res of results) {
+          articlePages.push({
+            path: `/articles/${res.sidoEn}-${res.sgguSlug}-${proc.slug}/`,
+            priority: '0.8',
+            freq: 'weekly',
+          });
+        }
+      } catch (e) {
+        console.warn(`  ⚠ ${r.sido} ${proc.slug} 아티클 생성 오류: ${e.message}`);
+      }
     }
   }
   console.log(`\n  → 총 ${articlePages.length}개 아티클 생성`);
