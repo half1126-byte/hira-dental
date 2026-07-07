@@ -16,6 +16,7 @@ import { generateAllFindPages } from './gen-find.js';
 import { generateAllLocalPages } from './gen-local.js';
 import { generateLlmsTxt } from './gen-llms.js';
 import { generatePriceIndex } from './gen-index.js';
+import { generateOgImages } from './gen-og.js';
 import { writeFileSync, mkdirSync } from 'node:fs';
 
 const __dir = dirname(fileURLToPath(import.meta.url));
@@ -179,6 +180,14 @@ async function main() {
     generatePressRelease();
   } catch (e) {
     console.warn(`  ⚠ 보도자료 초안 생성 오류(계속 진행): ${e.message}`);
+  }
+
+  // 3.9 OG 이미지 생성 (이미 존재하면 스킵 — 빌드 시간 절약)
+  console.log('\n── 3.9단계: OG 이미지 생성 ──');
+  try {
+    await generateOgImages();
+  } catch (e) {
+    console.warn(`  ⚠ OG 이미지 생성 오류(계속 진행): ${e.message}`);
   }
 
   // 4. sitemap.xml 생성

@@ -322,6 +322,11 @@ function pageShell({ title, desc, canonicalPath, heroTitle, heroSub, body, build
   <meta property="og:description" content="${desc}">
   <meta property="og:url" content="${BASE_URL}${canonicalPath}">
   <meta property="og:locale" content="ko_KR">
+  <meta property="og:image" content="${BASE_URL}/assets/og-default.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="${BASE_URL}/assets/og-default.png">
   <meta property="article:published_time" content="${buildDate}">
   <meta property="article:modified_time" content="${buildDate}">
   <link rel="canonical" href="${BASE_URL}${canonicalPath}">

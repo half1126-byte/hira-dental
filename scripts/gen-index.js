@@ -175,6 +175,11 @@ function reportHtml({ month, buildDate, regions, prev, archives, isLatest }) {
   <meta property="og:url" content="${url}">
   <meta property="og:site_name" content="${SITE_NAME}">
   <meta property="og:locale" content="ko_KR">
+  <meta property="og:image" content="${BASE_URL}/assets/og-default.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="${BASE_URL}/assets/og-default.png">
   <link rel="canonical" href="${url}">
   <link rel="alternate" type="application/json" href="${BASE_URL}/price-index/data/${month}.json" title="기계가독 지수 데이터">
   <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" rel="stylesheet">

@@ -141,6 +141,11 @@ function generateLocalPage(area, partners, buildDate) {
   <meta property="og:url" content="${url}">
   <meta property="og:site_name" content="${SITE_NAME}">
   <meta property="og:locale" content="ko_KR">
+  <meta property="og:image" content="${BASE_URL}/${['seoul','gyeonggi','busan','incheon'].includes(SIDO_EN[p0.sido]) ? `assets/og/${SIDO_EN[p0.sido]}.png` : 'assets/og-default.png'}">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="${BASE_URL}/${['seoul','gyeonggi','busan','incheon'].includes(SIDO_EN[p0.sido]) ? `assets/og/${SIDO_EN[p0.sido]}.png` : 'assets/og-default.png'}">
   <link rel="canonical" href="${url}">
   <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" rel="stylesheet">
   <link rel="stylesheet" href="${BASE_URL}/style.css">

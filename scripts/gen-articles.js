@@ -304,6 +304,11 @@ function generateArticleHtml(clinics, sgguNm, sidoNm, sidoEn, sgguSlug, buildDat
   <meta property="og:url" content="${url}">
   <meta property="og:site_name" content="${SITE_NAME}">
   <meta property="og:locale" content="ko_KR">
+  <meta property="og:image" content="${BASE_URL}/assets/og/${sidoEn}.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="${BASE_URL}/assets/og/${sidoEn}.png">
   <link rel="canonical" href="${url}">
   <link rel="preconnect" href="https://cdn.jsdelivr.net">
   <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" rel="stylesheet">
