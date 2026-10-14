@@ -12,7 +12,7 @@
     "partner:enrich": "node --env-file=.env.local scripts/enrich-partners.js"
   },
   "dependencies": {
-    "fast-xml-parser": "^4.4.0"
+    "fast-xml-parser": "^4.5.7"
   },
   "engines": {
     "node": ">=20"
