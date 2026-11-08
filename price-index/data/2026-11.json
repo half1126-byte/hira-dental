@@ -1,7 +1,7 @@
 {
   "index": "메디픽 임플란트 가격지수",
   "month": "2026-11",
-  "updatedAt": "2026-11-08",
+  "updatedAt": "2026-11-09",
   "source": "HIRA nonPaymentDamtInfoService (clCd=41)",
   "regions": [
     {
@@ -13,40 +13,18 @@
       "stdev": 781846,
       "min": 370000,
       "max": 4660000,
-      "computedAt": "2026-11-07T19:54:41.877Z"
+      "computedAt": "2026-11-08T20:09:51.363Z"
     },
     {
       "region": "경기",
       "regionEn": "gyeonggi",
-      "count": 21,
-      "median": 1300000,
-      "mean": 1183333,
-      "stdev": 414204,
+      "count": 26,
+      "median": 1350000,
+      "mean": 1354346,
+      "stdev": 694032,
       "min": 190000,
-      "max": 2100000,
-      "computedAt": "2026-11-07T19:54:41.877Z"
-    },
-    {
-      "region": "부산",
-      "regionEn": "busan",
-      "count": 22,
-      "median": 1150000,
-      "mean": 1143182,
-      "stdev": 358955,
-      "min": 400000,
-      "max": 2200000,
-      "computedAt": "2026-11-07T19:54:41.877Z"
-    },
-    {
-      "region": "인천",
-      "regionEn": "incheon",
-      "count": 10,
-      "median": 1100000,
-      "mean": 1222000,
-      "stdev": 394735,
-      "min": 780000,
-      "max": 2000000,
-      "computedAt": "2026-11-07T19:54:41.877Z"
+      "max": 4363000,
+      "computedAt": "2026-11-08T20:09:51.363Z"
     }
   ]
 }
