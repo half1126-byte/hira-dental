@@ -409,6 +409,15 @@ export function generateDentalHub(buildDate) {
     <h2>지역을 선택하세요</h2>
     <div class="guide-grid">${cards}</div>
   </section>
+  ${(() => {
+    const hubs = HUB_REGIONS.filter(r => existsSync(join(ROOT, 'meta', 'institutions', `${r.en}.json`)));
+    return hubs.length ? `<section class="clinics-detail-section">
+    <h2>시군구별 치과 현황</h2>
+    <p class="section-desc">건강보험심사평가원 병원정보서비스 기준 시군구별 치과의원·치과병원 수와 전체 기관 목록</p>
+    <div class="guide-grid">${hubs.map(r => `
+    <a class="region-card" href="${BASE_URL}/dental/${r.en}/"><h3>${r.nm} 치과 현황</h3><p>시군구별 치과 수</p></a>`).join('')}</div>
+  </section>` : '';
+  })()}
   <section class="related-section">
     <h2>더 보기</h2>
     <a href="${BASE_URL}/dental/compare/" class="cta-btn">전국 지역 비교 →</a>

@@ -7,7 +7,8 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { fetchImplantPrices, fetchDentalHospList, fetchNationwideStats, fetchNonPayItems, fetchDentalCounts, dedupeAndSort, PROCEDURES, SIDO } from './fetch-hira.js';
+import { fetchImplantPrices, fetchDentalHospList, fetchNationwideStats, fetchNonPayItems, fetchDentalCounts, fetchDentalInstitutions, dedupeAndSort, PROCEDURES, SIDO } from './fetch-hira.js';
+import { generateDistrictPages } from './gen-district.js';
 import { generateRegionPage, generateSitemap, generateDentalHub, generateComparePage, generateMethodologyPage } from './gen-pages.js';
 import { generateAllArticlesForSido, generateArticlesIndex, REGION_META } from './gen-articles.js';
 import { generateAllPartnerPages } from './gen-partners.js';
@@ -30,6 +31,33 @@ const BUILD_DATE = new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(0,
 
 // 생성할 지역 목록: site-config.js의 REGIONS (전국 17개 시도)
 
+// 시군구 치과 현황용 기관 목록 캐시 (meta/institutions/{시도}.json, CI가 커밋)
+// 기관 목록은 자주 바뀌지 않고 수집량이 커서 7일마다만 새로 받는다. 수집 실패 시 이전 캐시를 그대로 쓴다.
+const INST_DIR = join(ROOT, 'meta', 'institutions');
+const INST_REFRESH_DAYS = 7;
+async function loadInstitutions(nm, en) {
+  const f = join(INST_DIR, `${en}.json`);
+  let cached = null;
+  try { if (existsSync(f)) cached = JSON.parse(readFileSync(f, 'utf8')); } catch { cached = null; }
+  const ageDays = cached ? (Date.now() - Date.parse(cached.fetchedAt)) / 864e5 : Infinity;
+  if (cached && ageDays < INST_REFRESH_DAYS) {
+    console.log(`  · ${nm} 치과 기관 목록: 캐시 사용 (${Math.floor(ageDays)}일 전 수집, ${cached.items.length}곳)`);
+    return cached;
+  }
+  try {
+    const items = await fetchDentalInstitutions(nm);
+    const data = { sido: nm, fetchedAt: new Date().toISOString(), source: '건강보험심사평가원 병원정보서비스', items };
+    mkdirSync(INST_DIR, { recursive: true });
+    // 기관 1곳 = 1줄 (주간 갱신 diff를 읽기 쉽게)
+    const head = JSON.stringify({ ...data, items: undefined }).slice(0, -1);
+    writeFileSync(f, `${head},"items":[\n${items.map(x => JSON.stringify(x)).join(',\n')}\n]}\n`);
+    return data;
+  } catch (e) {
+    console.warn(`  ⚠ ${nm} 치과 기관 목록 수집 실패${cached ? ' — 이전 캐시 사용' : ''}: ${e.message}`);
+    return cached;
+  }
+}
+
 async function fetchAndSave(nm, en) {
   mkdirSync(DATA, { recursive: true });
 
@@ -42,7 +70,15 @@ async function fetchAndSave(nm, en) {
     fetchDentalHospList(nm),
   ]);
   // 병원정보서비스가 느려 동시 호출 시 타임아웃이 잦았음 → 가격 수집 뒤에 따로 호출
-  const counts = await fetchDentalCounts(nm).catch(() => null);
+  // 기관 목록이 있으면 그 집계를 치과 수로 쓰고, 없을 때만 totalCount 조회로 대체
+  const inst = await loadInstitutions(nm, en);
+  const counts = inst?.items?.length
+    ? {
+        clinic: inst.items.filter(x => x.cl === '치과의원').length,
+        hosp: inst.items.filter(x => x.cl === '치과병원').length,
+        source: inst.source, checkedAt: inst.fetchedAt,
+      }
+    : await fetchDentalCounts(nm).catch(() => null);
   console.log(`  ✓ ${nm} 치과병원 비급여 항목 ${allItems.length}행 수집`);
 
   const fetchedAt = new Date().toISOString();
@@ -177,6 +213,14 @@ async function main() {
     }
   }
   console.log(`\n  → 색인 대상 아티클 ${articlePages.length}개 · 기관 ${MIN_INDEX_CLINICS}곳 미만 noindex ${thinArticles}개`);
+  // 3.05 시군구별 치과 현황 (기관 목록 캐시 기반, 가격 아티클이 있으면 연결)
+  let districtPages = [];
+  try {
+    districtPages = generateDistrictPages(BUILD_DATE, new Set(articlePages.map(p => p.path)));
+  } catch (e) {
+    console.error(`  ✗ 시군구 치과 현황 생성 실패: ${e.message}`);
+    process.exit(1);
+  }
   const datedPages = savePageDates();
   console.log(`  ✓ meta/page-dates.json 저장 (${datedPages}개 페이지 발행·수정일)`);
   try {
@@ -254,6 +298,7 @@ async function main() {
       { path: '/dental/compare/', priority: '0.8', freq: 'weekly' },
       { path: '/articles/', priority: '0.8', freq: 'weekly' },
       ...articlePages,
+      ...districtPages,
       ...partnerPages,
       ...findPages,
       ...localPages,
@@ -266,11 +311,12 @@ async function main() {
   //     매일 전체 URL을 재통지하지 않아 검색엔진에 '변경 없는 재제출' 신호를 덜 보낸다.
   const allPaths = [
     '/', '/dental/', '/methodology/', '/dental/compare/', '/articles/',
-    ...generatedPages, ...articlePages, ...partnerPages, ...findPages, ...localPages, ...indexPages,
+    ...generatedPages, ...articlePages, ...districtPages, ...partnerPages, ...findPages, ...localPages, ...indexPages,
   ].map(p => (typeof p === 'string' ? p : p.path));
+  // 발행·수정일을 추적하는 페이지(시군구 아티클·치과 현황)는 오늘 데이터가 바뀐 것만 제출
   const changed = allPaths.filter(path => {
-    if (!path.startsWith('/articles/') || path === '/articles/') return true;
-    return getPageDates(`${BASE_URL}${path}`)?.modified === BUILD_DATE;
+    const d = getPageDates(`${BASE_URL}${path}`);
+    return !d || d.modified === BUILD_DATE;
   });
   writeFileSync(join(ROOT, 'indexnow-urls.txt'), changed.map(p => `${BASE_URL}${p}`).join('\n') + '\n');
   console.log(`  ✓ indexnow-urls.txt (${changed.length}/${allPaths.length}개 URL — 변경 없는 아티클 제외)`);

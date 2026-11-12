@@ -309,6 +309,77 @@ export async function fetchDentalCounts(sidoNm) {
   return null;
 }
 
+// 주소·시도명으로 해당 시도 소속 여부 확인 (응답이 다른 시도·전국 값이면 걸러냄)
+const SIDO_ADDR = {
+  서울: /서울/, 부산: /부산/, 대구: /대구/, 인천: /인천/, 광주: /광주광역시|^광주/, 대전: /대전/, 울산: /울산/, 세종: /세종/,
+  경기: /경기/, 강원: /강원/, 충북: /충청북|충북/, 충남: /충청남|충남/, 전북: /전라북|전북/, 전남: /전라남|전남/,
+  경북: /경상북|경북/, 경남: /경상남|경남/, 제주: /제주/,
+};
+
+/**
+ * 시도 내 치과의원(51)·치과병원(41) 전체 기본정보 (병원정보서비스, 페이지 수집)
+ * - 시군구별 치과 현황 페이지의 원천 데이터
+ * - 시도코드 6자리/2자리 중 '해당 시도 주소가 실제로 돌아오는' 쪽을 채택
+ * - 다른 시도 기관이 섞이면 제거, 수집이 끝까지 안 되면 throw (일부 데이터로 통계를 내지 않음)
+ */
+export async function fetchDentalInstitutions(sidoNm, pageSize = 500) {
+  const code6 = SIDO[sidoNm];
+  const re = SIDO_ADDR[sidoNm];
+  if (!code6 || !re) throw new Error(`알 수 없는 시도명: ${sidoNm}`);
+  const inSido = it => re.test(`${it.sidoCdNm ?? ''} ${it.addr ?? ''}`);
+  const num = v => (v === '' || v == null || Number.isNaN(Number(v)) ? null : Number(v));
+
+  async function pageAll(code, clCd) {
+    const items = [];
+    let total = null;
+    for (let page = 1; page <= 60; page++) {
+      const params = new URLSearchParams({ sidoCd: code, clCd, numOfRows: String(pageSize), pageNo: String(page) });
+      const xml = await fetchXml(`${BASE_HOSP}/getHospBasisList?serviceKey=${KEY}&${params}`, { timeoutMs: 60000 });
+      const body = parser.parse(xml)?.response?.body;
+      total = Number(body?.totalCount ?? 0);
+      const raw = body?.items?.item;
+      if (!raw) break;
+      items.push(...(Array.isArray(raw) ? raw : [raw]));
+      if (items.length >= total) break;
+    }
+    return { total, items };
+  }
+
+  const out = [];
+  for (const [clCd, clNm] of [['51', '치과의원'], ['41', '치과병원']]) {
+    let got = null;
+    for (const code of [code6, code6.slice(0, 2)]) {
+      try {
+        const r = await pageAll(code, clCd);
+        // 치과병원은 실제로 0곳인 시도가 있음(광주). 치과의원은 0이면 잘못된 조회로 본다
+        if (r.total === 0 && clCd === '41') { got = r; break; }
+        if (r.total > 0 && r.items.length && r.items.slice(0, 20).every(inSido)) { got = r; break; }
+      } catch (e) {
+        console.warn(`  ⚠ ${sidoNm} ${clNm} 목록 조회 실패(sidoCd=${code}): ${e.message}`);
+      }
+    }
+    if (!got) throw new Error(`${sidoNm} ${clNm} 목록을 신뢰할 수 있게 받지 못함`);
+    if (got.items.length < got.total) throw new Error(`${sidoNm} ${clNm} 목록 일부만 수집 (${got.items.length}/${got.total})`);
+    for (const it of got.items) {
+      if (!inSido(it)) continue;
+      const dety = ['detyGdrCnt', 'detyIntnCnt', 'detyResdntCnt', 'detySdrCnt'].map(k => num(it[k]));
+      out.push({
+        name: String(it.yadmNm ?? '').trim(),
+        cl: clNm,
+        sggu: String(it.sgguCdNm ?? '').trim(),
+        dong: String(it.emdongNm ?? '').trim(),
+        addr: String(it.addr ?? '').trim(),
+        tel: String(it.telno ?? '').trim(),
+        estb: String(it.estbDd ?? '').trim(),
+        dentists: dety.every(v => v == null) ? null : dety.reduce((a, b) => a + (b ?? 0), 0),
+        specialists: num(it.detySdrCnt),
+      });
+    }
+  }
+  console.log(`  ✓ ${sidoNm} 치과 기관 목록: ${out.length}곳 (치과의원 ${out.filter(x => x.cl === '치과의원').length} · 치과병원 ${out.filter(x => x.cl === '치과병원').length})`);
+  return out;
+}
+
 // --- 메인 실행 ---
 if (process.argv[1].endsWith('fetch-hira.js')) {
   const TARGETS = ['서울', '경기'];
