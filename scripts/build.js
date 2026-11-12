@@ -37,11 +37,12 @@ async function fetchAndSave(nm, en) {
 
   // 전체 항목 1회 조회 + 병원 목록 병렬
   // 전국 확장: 큰 시도는 치과병원 비급여 항목이 2,000행을 넘을 수 있어 상한을 넉넉히 둔다
-  const [allItems, hospList, counts] = await Promise.all([
+  const [allItems, hospList] = await Promise.all([
     fetchNonPayItems(nm, '41', [], 8000),
     fetchDentalHospList(nm),
-    fetchDentalCounts(nm).catch(() => null),
   ]);
+  // 병원정보서비스가 느려 동시 호출 시 타임아웃이 잦았음 → 가격 수집 뒤에 따로 호출
+  const counts = await fetchDentalCounts(nm).catch(() => null);
   console.log(`  ✓ ${nm} 치과병원 비급여 항목 ${allItems.length}행 수집`);
 
   const fetchedAt = new Date().toISOString();

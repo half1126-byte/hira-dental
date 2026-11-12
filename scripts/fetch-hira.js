@@ -77,13 +77,45 @@ export const SPECIALTIES = {
   },
 };
 
-async function fetchXml(url) {
-  const res = await fetch(url, {
-    headers: { 'User-Agent': 'HIRANopayBot/0.1 (public data aggregator)' },
-    signal: AbortSignal.timeout(15000),
-  });
-  if (!res.ok) throw new Error(`HTTP ${res.status}: ${url.slice(0, 80)}`);
-  return res.text();
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+/**
+ * HIRA API 호출 — 일시 장애(타임아웃·네트워크·5xx·서비스 오류 코드)는 최대 3회 재시도.
+ * 2026-11-12 전국 확장 첫 빌드에서 병원정보서비스가 17개 시도 중 15곳에서 15초 타임아웃.
+ */
+async function fetchXml(url, { attempts = 3, timeoutMs = 30000 } = {}) {
+  let lastErr;
+  for (let i = 1; i <= attempts; i++) {
+    try {
+      const res = await fetch(url, {
+        headers: { 'User-Agent': 'HIRANopayBot/0.1 (public data aggregator)' },
+        signal: AbortSignal.timeout(timeoutMs),
+      });
+      if (res.status >= 500) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) throw Object.assign(new Error(`HTTP ${res.status}`), { fatal: true });
+      const xml = await res.text();
+      checkResultCode(xml);
+      return xml;
+    } catch (e) {
+      lastErr = e;
+      if (e.fatal || i === attempts) break;
+      await sleep(i * 3000);
+    }
+  }
+  throw new Error(`${lastErr?.message ?? lastErr} (${attempts}회 시도)`);
+}
+
+/**
+ * 응답 헤더의 resultCode 확인. 정상(00/0/000)이 아니면 오류로 던진다.
+ * 이 확인이 없으면 호출 한도 초과·서비스 오류 응답이 '데이터 0건'과 구분되지 않는다
+ * (2026-11-12 광주가 0행으로 수집된 원인 후보).
+ */
+function checkResultCode(xml) {
+  const code = /<resultCode>\s*([^<\s]+)\s*<\/resultCode>/.exec(xml)?.[1];
+  const msg = /<resultMsg>\s*([^<]*)<\/resultMsg>/.exec(xml)?.[1]?.trim()
+    ?? /<returnAuthMsg>\s*([^<]*)<\/returnAuthMsg>/.exec(xml)?.[1]?.trim();
+  if (code && !['00', '0', '000'].includes(code)) throw new Error(`HIRA resultCode ${code}${msg ? ` (${msg})` : ''}`);
+  if (!code && /<OpenAPI_ServiceResponse>|SERVICE_KEY|LIMITED_NUMBER/i.test(xml)) throw new Error(`HIRA 오류 응답: ${msg ?? xml.slice(0, 120)}`);
 }
 
 /**
@@ -113,7 +145,10 @@ export async function fetchNonPayItems(sidoNm, clCd, keywords = [], maxRows = 20
       if (!body) break;
 
       const totalCount = Number(body.totalCount ?? 0);
-      if (totalCount === 0) break;
+      if (totalCount === 0) {
+        console.log(`  · ${sidoNm} clCd=${clCd}: API 정상 응답(resultCode 확인), 신고 항목 0건`);
+        break;
+      }
 
       const raw = body?.items?.item;
       if (!raw) break;
@@ -124,8 +159,9 @@ export async function fetchNonPayItems(sidoNm, clCd, keywords = [], maxRows = 20
       if (items.length >= totalCount) break;
       page++;
     } catch (e) {
-      console.warn(`  ⚠ 페이지 ${page} 오류 (clCd=${clCd}):`, e.message);
-      break;
+      // 재시도 후에도 실패하면 빈 값·일부 값으로 통계를 내지 않도록 시도 단위로 실패시킨다
+      // (build.js가 해당 시도만 건너뛰고 계속 진행)
+      throw new Error(`${sidoNm} 비급여 ${page}페이지 수집 실패 — ${items.length}건까지 받음: ${e.message}`);
     }
   }
 
