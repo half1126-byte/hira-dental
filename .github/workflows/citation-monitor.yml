@@ -22,9 +22,12 @@ jobs:
           node-version: '20'
 
       - name: 인용 점검 실행
+        id: check
         env:
           PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
-        run: node scripts/check-citations.js
+          CITATION_RUNS: '3'
+        # API 오류가 있어도 리포트는 커밋하고, 마지막 단계에서 실패 처리해 알림 이슈를 만든다
+        run: node scripts/check-citations.js || echo "api_error=true" >> "$GITHUB_OUTPUT"
 
       - name: 리포트 커밋
         run: |
@@ -39,6 +42,12 @@ jobs:
             git commit -m "report: AI 인용 모니터링 $(date -u +%Y-%m-%d)"
             git push origin main
           fi
+
+      - name: API 오류 시 실패 처리
+        if: steps.check.outputs.api_error == 'true'
+        run: |
+          echo "::error::Perplexity API 오류 — 키 만료·한도를 확인하세요. 이번 리포트의 오류 행은 미인용이 아니라 측정 실패입니다."
+          exit 1
 
       - name: 실패 알림 이슈 생성
         if: failure()

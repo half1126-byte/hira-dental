@@ -171,7 +171,7 @@ export async function generateOgImages({ force = false } = {}) {
   if (force || !existsSync(defaultOut)) {
     const svg = makeSvg({
       title: '전국 치과 비급여 가격 정보',
-      subtitle: 'HIRA 공공데이터 · 임플란트·크라운·스케일링',
+      subtitle: 'HIRA 공공데이터 · 임플란트·지르코니아 보철·스케일링',
       font,
     });
     const png = svgToPng(svg, font);

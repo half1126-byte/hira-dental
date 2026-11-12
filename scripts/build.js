@@ -17,6 +17,8 @@ import { generateAllLocalPages } from './gen-local.js';
 import { generateLlmsTxt } from './gen-llms.js';
 import { generatePriceIndex } from './gen-index.js';
 import { generateOgImages } from './gen-og.js';
+import { getPageDates, savePageDates } from './page-dates.js';
+import { BASE_URL, MIN_INDEX_CLINICS } from './site-config.js';
 import { writeFileSync, mkdirSync } from 'node:fs';
 
 const __dir = dirname(fileURLToPath(import.meta.url));
@@ -127,6 +129,7 @@ async function main() {
   // 3. 아티클 페이지 생성 (시군구별 치과 추천 아티클)
   console.log('\n── 3단계: 아티클 페이지 생성 ──');
   const articlePages = [];
+  let thinArticles = 0;
   const procList = Object.values(PROCEDURES);
   for (const r of REGION_META) {
     console.log(`\n[${r.sido}] 아티클 생성 중...`);
@@ -139,10 +142,14 @@ async function main() {
       try {
         const results = generateAllArticlesForSido(r.dataKey, r.sido, r.sidoEn, BUILD_DATE, 1, proc);
         for (const res of results) {
+          // 기관 수가 기준 미만인 얇은 페이지는 noindex라 사이트맵에서도 뺀다
+          if (!res.indexable) { thinArticles++; continue; }
+          const path = `/articles/${res.sidoEn}-${res.sgguSlug}-${proc.slug}/`;
           articlePages.push({
-            path: `/articles/${res.sidoEn}-${res.sgguSlug}-${proc.slug}/`,
+            path,
             priority: '0.8',
             freq: 'weekly',
+            lastmod: getPageDates(`${BASE_URL}${path}`)?.modified,
           });
         }
       } catch (e) {
@@ -150,7 +157,9 @@ async function main() {
       }
     }
   }
-  console.log(`\n  → 총 ${articlePages.length}개 아티클 생성`);
+  console.log(`\n  → 색인 대상 아티클 ${articlePages.length}개 · 기관 ${MIN_INDEX_CLINICS}곳 미만 noindex ${thinArticles}개`);
+  const datedPages = savePageDates();
+  console.log(`  ✓ meta/page-dates.json 저장 (${datedPages}개 페이지 발행·수정일)`);
   try {
     generateArticlesIndex(BUILD_DATE);
   } catch (e) {

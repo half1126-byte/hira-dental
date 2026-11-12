@@ -23,10 +23,8 @@ const DATA_DIR = join(ROOT, 'data');
 const OUT_DIR = join(ROOT, 'price-index');
 const SNAP_DIR = join(OUT_DIR, 'data');
 
-import { BASE_URL } from './site-config.js';
-const SITE_NAME = '메디픽 MediPick';
+import { BASE_URL, SITE_NAME, checkLawHard } from './site-config.js';
 const INDEX_NAME = '메디픽 임플란트 가격지수';
-const LAW_HARD = ['최고', '1위', '최저가', '유일', '완치', '보장', '100%', '최상급', '명품', '무통'];
 
 const REGIONS = [
   { nm: '서울', en: 'seoul' }, { nm: '경기', en: 'gyeonggi' },
@@ -84,10 +82,6 @@ function loadPrevSnapshot(month) {
   } catch { return null; }
 }
 
-function checkLawHard(html, filePath) {
-  const v = LAW_HARD.filter(w => html.includes(w));
-  if (v.length) throw new Error(`🚨 LAW_HARD 위반 [${filePath}]: ${v.join(', ')}`);
-}
 
 /** 리포트 HTML (최신호/아카이브 공용) */
 function reportHtml({ month, buildDate, regions, prev, archives, isLatest }) {

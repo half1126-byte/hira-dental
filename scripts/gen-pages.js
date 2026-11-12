@@ -14,17 +14,9 @@ const DATA   = join(ROOT, 'data');
 const TMPL   = join(ROOT, 'templates');
 const DENTAL = join(ROOT, 'dental');
 
-import { BASE_URL } from './site-config.js';
+import { BASE_URL, SITE_NAME, checkLawHard } from './site-config.js';
 
-// 의료광고법 제56조 금지어
-const LAW_HARD = ['최고', '1위', '최저가', '유일', '완치', '보장', '100%', '최상급', '명품', '무통'];
 
-function checkLawHard(html, filePath) {
-  const found = LAW_HARD.filter(w => html.includes(w));
-  if (found.length > 0) {
-    throw new Error(`🚨 LAW_HARD 위반 [${filePath}]: ${found.join(', ')}`);
-  }
-}
 
 function formatAmt(val) {
   const n = Number(val);
@@ -158,8 +150,8 @@ function buildJsonLd(prices, regionNm, regionEn, buildDate) {
   const minW = validAmts.length ? Math.round(Math.min(...validAmts) / 10000) : null;
   const maxW = validAmts.length ? Math.round(Math.max(...validAmts) / 10000) : null;
   const faqQ1Text = (validAmts.length && minW && maxW && minW !== maxW)
-    ? `건강보험심사평가원 비급여 신고 데이터 기준, ${regionNm} 치과의원의 임플란트 신고 가격은 ${minW}만원~${maxW}만원(${validAmts.length}개 기관 신고 기준)입니다. 재료·추가시술에 따라 실제 비용은 다를 수 있습니다.`
-    : `건강보험심사평가원 비급여 신고 데이터 기준, ${regionNm} 치과의원의 임플란트 가격은 기관마다 다릅니다. 본 페이지에서 신고된 가격 정보를 확인하실 수 있습니다.`;
+    ? `건강보험심사평가원 비급여 신고 데이터 기준, ${regionNm} 치과병원의 임플란트 신고 가격은 ${minW}만원~${maxW}만원(${validAmts.length}개 기관 신고 기준)입니다. 재료·추가시술에 따라 실제 비용은 다를 수 있습니다.`
+    : `건강보험심사평가원 비급여 신고 데이터 기준, ${regionNm} 치과병원의 임플란트 가격은 기관마다 다릅니다. 본 페이지에서 신고된 가격 정보를 확인하실 수 있습니다.`;
 
   const schemas = [
     {
@@ -293,7 +285,7 @@ export function generateSitemap(pages, buildDate) {
   const entries = pages.map(p => `
   <url>
     <loc>${BASE_URL}${p.path}</loc>
-    <lastmod>${buildDate}</lastmod>
+    <lastmod>${p.lastmod ?? buildDate}</lastmod>
     <changefreq>${p.freq ?? 'weekly'}</changefreq>
     <priority>${p.priority ?? '0.9'}</priority>
   </url>`).join('');
@@ -463,7 +455,7 @@ export function generateMethodologyPage(buildDate) {
   const body = `
   <section class="methodology-section">
     <h2>1. 데이터 수집</h2>
-    <p>건강보험심사평가원(HIRA) 비급여 진료비용 공개 API에서 치과의원·치과병원(clCd=41 계열) 신고 가격을 수집합니다. 해당 데이터는 공공저작물 제1유형(출처표시, 상업적 이용 가능)으로 공개됩니다.</p>
+    <p>건강보험심사평가원(HIRA) 비급여 진료비용 공개 API에서 치과병원(종별코드 41) 신고 가격을 수집합니다. 이 공개 API는 치과의원(동네 치과 대부분)을 제공하지 않으므로, 지역 통계는 치과병원 표본 기준이며 지역 전체 치과의 평균이 아닙니다. 해당 데이터는 공공저작물 제1유형(출처표시, 상업적 이용 가능)으로 공개됩니다.</p>
     <p>원천: <a href="https://www.hira.or.kr" target="_blank" rel="noopener">건강보험심사평가원(HIRA)</a> · <a href="https://www.data.go.kr" target="_blank" rel="noopener">공공데이터포털(data.go.kr)</a></p>
   </section>
 
