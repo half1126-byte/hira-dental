@@ -7,35 +7,178 @@
     {
       "region": "서울",
       "regionEn": "seoul",
-      "count": 9,
-      "median": 1200000,
-      "mean": 1423790,
-      "stdev": 774012,
+      "count": 52,
+      "median": 1300000,
+      "mean": 1541203,
+      "stdev": 791988,
       "min": 370000,
-      "max": 2794113,
-      "computedAt": "2026-11-11T22:31:29.672Z"
+      "max": 4660000,
+      "computedAt": "2026-11-12T07:12:12.671Z"
     },
     {
       "region": "경기",
       "regionEn": "gyeonggi",
-      "count": 44,
-      "median": 1250000,
-      "mean": 1278023,
-      "stdev": 586364,
+      "count": 46,
+      "median": 1200000,
+      "mean": 1259196,
+      "stdev": 580311,
       "min": 190000,
       "max": 4363000,
-      "computedAt": "2026-11-11T22:31:29.672Z"
+      "computedAt": "2026-11-12T07:12:12.671Z"
     },
     {
       "region": "부산",
       "regionEn": "busan",
-      "count": 10,
-      "median": 1200000,
-      "mean": 1184000,
-      "stdev": 289144,
-      "min": 750000,
+      "count": 23,
+      "median": 1100000,
+      "mean": 1101739,
+      "stdev": 276604,
+      "min": 400000,
       "max": 1700000,
-      "computedAt": "2026-11-11T22:31:29.672Z"
+      "computedAt": "2026-11-12T07:12:12.671Z"
+    },
+    {
+      "region": "경남",
+      "regionEn": "gyeongnam",
+      "count": 23,
+      "median": 1100000,
+      "mean": 1265420,
+      "stdev": 874943,
+      "min": 490000,
+      "max": 5044650,
+      "computedAt": "2026-11-12T07:12:12.671Z"
+    },
+    {
+      "region": "인천",
+      "regionEn": "incheon",
+      "count": 10,
+      "median": 1100000,
+      "mean": 1222000,
+      "stdev": 394735,
+      "min": 780000,
+      "max": 2000000,
+      "computedAt": "2026-11-12T07:12:12.671Z"
+    },
+    {
+      "region": "경북",
+      "regionEn": "gyeongbuk",
+      "count": 10,
+      "median": 1100000,
+      "mean": 1103000,
+      "stdev": 226409,
+      "min": 690000,
+      "max": 1500000,
+      "computedAt": "2026-11-12T07:12:12.671Z"
+    },
+    {
+      "region": "대구",
+      "regionEn": "daegu",
+      "count": 11,
+      "median": 1400000,
+      "mean": 1596023,
+      "stdev": 545060,
+      "min": 1000000,
+      "max": 2856250,
+      "computedAt": "2026-11-12T07:12:12.671Z"
+    },
+    {
+      "region": "충남",
+      "regionEn": "chungnam",
+      "count": 13,
+      "median": 1400000,
+      "mean": 1450538,
+      "stdev": 336652,
+      "min": 1000000,
+      "max": 2407000,
+      "computedAt": "2026-11-12T07:12:12.671Z"
+    },
+    {
+      "region": "전남",
+      "regionEn": "jeonnam",
+      "count": 14,
+      "median": 1045000,
+      "mean": 1083695,
+      "stdev": 350509,
+      "min": 550000,
+      "max": 1800000,
+      "computedAt": "2026-11-12T07:12:12.671Z"
+    },
+    {
+      "region": "전북",
+      "regionEn": "jeonbuk",
+      "count": 3,
+      "median": 2000000,
+      "mean": 2353333,
+      "stdev": 1074565,
+      "min": 1250000,
+      "max": 3810000,
+      "computedAt": "2026-11-12T07:12:12.671Z"
+    },
+    {
+      "region": "충북",
+      "regionEn": "chungbuk",
+      "count": 4,
+      "median": 1095000,
+      "mean": 1195000,
+      "stdev": 303356,
+      "min": 890000,
+      "max": 1700000,
+      "computedAt": "2026-11-12T07:12:12.671Z"
+    },
+    {
+      "region": "강원",
+      "regionEn": "gangwon",
+      "count": 4,
+      "median": 1345000,
+      "mean": 1397500,
+      "stdev": 560374,
+      "min": 700000,
+      "max": 2200000,
+      "computedAt": "2026-11-12T07:12:12.671Z"
+    },
+    {
+      "region": "대전",
+      "regionEn": "daejeon",
+      "count": 6,
+      "median": 1550000,
+      "mean": 1865000,
+      "stdev": 1007534,
+      "min": 990000,
+      "max": 4000000,
+      "computedAt": "2026-11-12T07:12:12.671Z"
+    },
+    {
+      "region": "울산",
+      "regionEn": "ulsan",
+      "count": 4,
+      "median": 1350000,
+      "mean": 1247500,
+      "stdev": 291151,
+      "min": 790000,
+      "max": 1500000,
+      "computedAt": "2026-11-12T07:12:12.671Z"
+    },
+    {
+      "region": "제주",
+      "regionEn": "jeju",
+      "count": 1,
+      "median": 1300000,
+      "mean": 1300000,
+      "stdev": 0,
+      "min": 1300000,
+      "max": 1300000,
+      "computedAt": "2026-11-12T07:12:12.671Z"
+    },
+    {
+      "region": "세종",
+      "regionEn": "sejong",
+      "count": 1,
+      "median": 2841000,
+      "mean": 2841000,
+      "stdev": 0,
+      "min": 2841000,
+      "max": 2841000,
+      "computedAt": "2026-11-12T07:12:12.671Z"
     }
   ]
 }
