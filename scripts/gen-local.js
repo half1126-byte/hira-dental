@@ -20,9 +20,7 @@ const __dir = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dir, '..');
 const OUT_DIR = join(ROOT, 'local');
 
-import { BASE_URL } from './site-config.js';
-const SITE_NAME = '메디픽 MediPick';
-const LAW_HARD = ['최고', '1위', '최저가', '유일', '완치', '보장', '100%', '최상급', '명품', '무통'];
+import { BASE_URL, SITE_NAME, checkLawHard, REGIONS } from './site-config.js';
 
 const DISCLOSURE =
   '본 페이지에 소개된 의료기관 정보는 해당 기관이 제공·확인한 자료 기반이며, 게재에 경제적 대가가 포함될 수 있습니다. ' +
@@ -32,10 +30,6 @@ function esc(s) {
   return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
-function checkLawHard(html, filePath) {
-  const v = LAW_HARD.filter(w => html.includes(w));
-  if (v.length) throw new Error(`🚨 LAW_HARD 위반 [${filePath}]: ${v.join(', ')}`);
-}
 
 /** 상위 구 아티클 경로 (있을 때만 링크) */
 function sgguArticlePath(p) {
@@ -141,11 +135,11 @@ function generateLocalPage(area, partners, buildDate) {
   <meta property="og:url" content="${url}">
   <meta property="og:site_name" content="${SITE_NAME}">
   <meta property="og:locale" content="ko_KR">
-  <meta property="og:image" content="${BASE_URL}/${['seoul','gyeonggi','busan','incheon'].includes(SIDO_EN[p0.sido]) ? `assets/og/${SIDO_EN[p0.sido]}.png` : 'assets/og-default.png'}">
+  <meta property="og:image" content="${BASE_URL}/${REGIONS.some(r => r.en === SIDO_EN[p0.sido]) ? `assets/og/${SIDO_EN[p0.sido]}.png` : 'assets/og-default.png'}">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:image" content="${BASE_URL}/${['seoul','gyeonggi','busan','incheon'].includes(SIDO_EN[p0.sido]) ? `assets/og/${SIDO_EN[p0.sido]}.png` : 'assets/og-default.png'}">
+  <meta name="twitter:image" content="${BASE_URL}/${REGIONS.some(r => r.en === SIDO_EN[p0.sido]) ? `assets/og/${SIDO_EN[p0.sido]}.png` : 'assets/og-default.png'}">
   <link rel="canonical" href="${url}">
   <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" rel="stylesheet">
   <link rel="stylesheet" href="${BASE_URL}/style.css">

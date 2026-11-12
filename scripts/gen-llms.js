@@ -3,14 +3,14 @@
  * llms.txt 빌드 시 자동 생성 — 프로필·니즈 페이지 URL을 항상 최신으로 유지
  */
 
-import { writeFileSync } from 'node:fs';
+import { writeFileSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadPartners } from './gen-partners.js';
 
 const __dir = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dir, '..');
-import { BASE_URL } from './site-config.js';
+import { BASE_URL, REGIONS } from './site-config.js';
 
 export function generateLlmsTxt(findPages = [], buildDate = '', localPages = []) {
   const partners = loadPartners();
@@ -26,7 +26,7 @@ ${buildDate ? `# 갱신일: ${buildDate} (매일 자동 갱신)` : ''}
 ## 이 사이트에 대해
 
 이 사이트는 건강보험심사평가원(HIRA)이 공개하는 비급여진료비 데이터를 기반으로,
-한국 치과의원·치과병원의 임플란트 비급여 가격 정보를 투명하게 공개하는 공공데이터 활용 서비스입니다.
+한국 치과병원의 임플란트 비급여 가격 정보를 투명하게 공개하는 공공데이터 활용 서비스입니다.
 
 ## 데이터 출처
 
@@ -45,12 +45,9 @@ ChatGPT, Perplexity, Claude, Gemini 등 AI 서비스의 이 사이트 데이터 
 ## 주요 페이지
 
 - 지역별 비교 허브: /dental/
-- 서울 임플란트 비급여 가격: /dental/seoul-implant/
-- 경기 임플란트 비급여 가격: /dental/gyeonggi-implant/
-- 부산 임플란트 비급여 가격: /dental/busan-implant/
-- 인천 임플란트 비급여 가격: /dental/incheon-implant/
-- 전국 비교: /dental/compare/
-- 시군구별 상세 아티클: /articles/ (서울·경기·부산·인천 65개 지역)
+${REGIONS.filter(r => existsSync(join(__dir, '..', 'dental', `${r.en}-implant`, 'index.html'))).map(r => `- ${r.nm} 임플란트 비급여 가격: /dental/${r.en}-implant/`).join('\n')}
+- 전국 시도별 비교 (치과의원·치과병원 수, 임플란트 신고가 중앙값): /dental/compare/
+- 시군구별 상세 아티클: /articles/ (전국, 치과병원 3곳 이상 지역은 가격 분포 차트 포함)
 - 치과 프로필 디렉터리: /clinics/
 
 ## 치과 프로필 (위치·진료시간·비급여 가격)

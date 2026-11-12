@@ -10,7 +10,7 @@
  * 실행: node scripts/submit-indexnow.js   (CI: build.yml indexnow 잡)
  */
 
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -34,8 +34,16 @@ async function loadSitemap() {
   return readFileSync(join(ROOT, 'sitemap.xml'), 'utf8');
 }
 
-const sitemap = await loadSitemap();
-const urls = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map(m => m[1]);
+// 빌드가 만든 변경 URL 목록이 있으면 그것만 제출 (CI: build 잡 → 아티팩트 → indexnow 잡)
+let urls;
+const listFile = process.env.INDEXNOW_URLS_FILE;
+if (listFile && existsSync(listFile)) {
+  urls = readFileSync(listFile, 'utf8').split('\n').map(s => s.trim()).filter(Boolean);
+  console.log(`  변경 URL 목록 사용: ${listFile}`);
+} else {
+  const sitemap = await loadSitemap();
+  urls = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map(m => m[1]);
+}
 
 if (!urls.length) {
   console.error('✗ sitemap.xml에서 URL을 찾지 못함');

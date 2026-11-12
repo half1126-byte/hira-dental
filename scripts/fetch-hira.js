@@ -242,6 +242,37 @@ export async function fetchDentalHospList(sidoNm, maxRows = 200) {
   }
 }
 
+/**
+ * 시도별 치과의원·치과병원 수 (병원정보서비스 totalCount, 1행만 요청)
+ * - 비급여 가격 API는 치과병원만 제공하므로, 표본이 지역 치과 전체 중 얼마인지 밝히는 근거로 쓴다
+ * - 시도코드 표기(6자리/2자리)를 둘 다 시도하고, 값이 비정상이면 null (페이지에 표시하지 않음)
+ */
+export async function fetchDentalCounts(sidoNm) {
+  const sidoCd = SIDO[sidoNm];
+  if (!sidoCd) throw new Error(`알 수 없는 시도명: ${sidoNm}`);
+  async function count(code, clCd) {
+    const params = new URLSearchParams({ sidoCd: code, clCd, numOfRows: '1', pageNo: '1' });
+    const xml = await fetchXml(`${BASE_HOSP}/getHospBasisList?serviceKey=${KEY}&${params}`);
+    const n = Number(parser.parse(xml)?.response?.body?.totalCount);
+    return Number.isFinite(n) ? n : null;
+  }
+  for (const code of [sidoCd, sidoCd.slice(0, 2)]) {
+    try {
+      const clinic = await count(code, '51');   // 치과의원
+      const hosp = await count(code, '41');     // 치과병원
+      // 의원이 병원보다 많아야 정상 (clCd가 무시되면 두 값이 같게 나옴)
+      if (clinic > 0 && hosp > 0 && clinic > hosp) {
+        console.log(`  ✓ ${sidoNm} 치과 수(hospInfo): 치과의원 ${clinic}곳 · 치과병원 ${hosp}곳`);
+        return { clinic, hosp, source: '건강보험심사평가원 병원정보서비스', checkedAt: new Date().toISOString() };
+      }
+    } catch (e) {
+      console.warn(`  ⚠ ${sidoNm} 치과 수 조회 실패(sidoCd=${code}): ${e.message}`);
+    }
+  }
+  console.warn(`  ⚠ ${sidoNm} 치과 수: 신뢰할 수 있는 값을 받지 못해 표시하지 않음`);
+  return null;
+}
+
 // --- 메인 실행 ---
 if (process.argv[1].endsWith('fetch-hira.js')) {
   const TARGETS = ['서울', '경기'];

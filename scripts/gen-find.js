@@ -17,9 +17,7 @@ const __dir = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dir, '..');
 const OUT_DIR = join(ROOT, 'find');
 
-import { BASE_URL } from './site-config.js';
-const SITE_NAME = '메디픽 MediPick';
-const LAW_HARD = ['최고', '1위', '최저가', '유일', '완치', '보장', '100%', '최상급', '명품', '무통'];
+import { BASE_URL, SITE_NAME, checkLawHard } from './site-config.js';
 
 const DISCLOSURE =
   '본 페이지에 소개된 의료기관 정보는 해당 기관이 제공·확인한 자료 기반이며, 게재에 경제적 대가가 포함될 수 있습니다. ' +
@@ -67,10 +65,6 @@ function esc(s) {
   return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
-function checkLawHard(html, filePath) {
-  const v = LAW_HARD.filter(w => html.includes(w));
-  if (v.length) throw new Error(`🚨 LAW_HARD 위반 [${filePath}]: ${v.join(', ')}`);
-}
 
 /** 지역 라벨: "서울 강동구" | "경기 부천원미구" 등 + slug */
 function regionOf(p) {

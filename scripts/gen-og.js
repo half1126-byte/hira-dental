@@ -19,6 +19,7 @@ import { Resvg } from '@resvg/resvg-js';
 import { writeFileSync, readFileSync, mkdirSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { REGIONS } from './site-config.js';
 
 const __dir = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dir, '..');
@@ -171,7 +172,7 @@ export async function generateOgImages({ force = false } = {}) {
   if (force || !existsSync(defaultOut)) {
     const svg = makeSvg({
       title: '전국 치과 비급여 가격 정보',
-      subtitle: 'HIRA 공공데이터 · 임플란트·크라운·스케일링',
+      subtitle: 'HIRA 공공데이터 · 임플란트·지르코니아 보철·스케일링',
       font,
     });
     const png = svgToPng(svg, font);
@@ -182,12 +183,7 @@ export async function generateOgImages({ force = false } = {}) {
   }
 
   // 지역별 카드
-  const SIDOS = [
-    { en: 'seoul',    kr: '서울' },
-    { en: 'gyeonggi', kr: '경기' },
-    { en: 'busan',   kr: '부산' },
-    { en: 'incheon', kr: '인천' },
-  ];
+  const SIDOS = REGIONS.map(r => ({ en: r.en, kr: r.nm }));
 
   for (const s of SIDOS) {
     const out = join(OG_DIR, `${s.en}.png`);

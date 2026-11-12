@@ -26,10 +26,8 @@ const DATA_DIR = join(ROOT, 'data');
 const OUT_DIR = join(ROOT, 'clinics');
 const PARTNERS_FILE = join(ROOT, 'partners', 'partners.json');
 
-import { BASE_URL } from './site-config.js';
-const SITE_NAME = '메디픽 MediPick';
+import { BASE_URL, SITE_NAME, checkLawHard } from './site-config.js';
 
-const LAW_HARD = ['최고', '1위', '최저가', '유일', '완치', '보장', '100%', '최상급', '명품', '무통'];
 
 // 표시광고법상 최소 고지 (하단 출처 박스 1줄만 노출)
 const DISCLOSURE =
@@ -463,10 +461,6 @@ function generateIndexHtml(partners, buildDate) {
 </html>`;
 }
 
-function checkLawHard(html, filePath) {
-  const violations = LAW_HARD.filter(w => html.includes(w));
-  if (violations.length) throw new Error(`🚨 LAW_HARD 위반 [${filePath}]: ${violations.join(', ')}`);
-}
 
 /** 전체 거래처 페이지 생성 → sitemap용 경로 목록 반환 */
 export function generateAllPartnerPages(buildDate, includeExamples = false) {
