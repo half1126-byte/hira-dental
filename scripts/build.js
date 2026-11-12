@@ -322,17 +322,37 @@ async function main() {
   console.log(`  ✓ indexnow-urls.txt (${changed.length}/${allPaths.length}개 URL — 변경 없는 아티클 제외)`);
 
   // 5. 시크릿 스캔 (빌드 결과물 대상)
-  console.log('\n── 5단계: 시크릿·광고법 스캔 ──');
-  const { execSync } = await import('node:child_process');
-  try {
-    execSync(
-      'node -e "const{readdirSync,readFileSync}=require(\'fs\');const{join}=require(\'path\');function scan(d){try{for(const f of readdirSync(d,{withFileTypes:true})){if(f.isDirectory())scan(join(d,f.name));else if(f.name.endsWith(\'.html\')){const c=readFileSync(join(d,f.name),\'utf8\');const hits=[\'nO3sSSWe\',\'Gwwwwang94\'].filter(k=>c.includes(k));if(hits.length)throw new Error(\'SECRET LEAK: \'+join(d,f.name)+\' :: \'+hits.join(\',\'));}}}catch(e){if(e.code!==\'ENOENT\')throw e}};scan(\'dental\');scan(\'articles\');scan(\'clinics\');scan(\'find\');scan(\'local\');scan(\'price-index\')"',
-      { cwd: ROOT, stdio: 'inherit' },
-    );
-    console.log('  ✓ 시크릿 스캔 통과');
-  } catch (e) {
-    console.error('  ✗ 시크릿 스캔 실패:', e.message);
-    process.exit(1);
+  // 실제 키 값을 코드에 적지 않고, 실행 중인 환경변수의 키 값과 일반적인 토큰 형태로 검사한다
+  // (이전에는 키·비밀번호 일부 문자열을 코드에 직접 적어 공개 레포에 노출돼 있었음)
+  console.log('\n── 5단계: 시크릿 스캔 ──');
+  {
+    const { readdirSync } = await import('node:fs');
+    const secrets = [process.env.HIRA_API_KEY, process.env.PERPLEXITY_API_KEY]
+      .filter(v => v && v.length >= 12)
+      .flatMap(v => [v, encodeURIComponent(v)]);
+    const patterns = [/serviceKey=[A-Za-z0-9%+/=]{20,}/, /github_pat_[A-Za-z0-9_]{20,}/, /\bghp_[A-Za-z0-9]{30,}/, /\bpplx-[A-Za-z0-9]{20,}/];
+    const leaks = [];
+    const scan = d => {
+      if (!existsSync(join(ROOT, d))) return;
+      for (const f of readdirSync(join(ROOT, d), { withFileTypes: true })) {
+        const rel = join(d, f.name);
+        if (f.isDirectory()) scan(rel);
+        else if (/\.(html|json|txt|xml)$/.test(f.name)) {
+          const c = readFileSync(join(ROOT, rel), 'utf8');
+          if (secrets.some(v => c.includes(v)) || patterns.some(re => re.test(c))) leaks.push(rel);
+        }
+      }
+    };
+    for (const d of ['dental', 'articles', 'clinics', 'find', 'local', 'price-index', 'methodology']) scan(d);
+    for (const f of ['index.html', 'llms.txt', 'sitemap.xml']) {
+      const c = existsSync(join(ROOT, f)) ? readFileSync(join(ROOT, f), 'utf8') : '';
+      if (secrets.some(v => c.includes(v)) || patterns.some(re => re.test(c))) leaks.push(f);
+    }
+    if (leaks.length) {
+      console.error(`  ✗ 시크릿 노출 의심 파일: ${leaks.slice(0, 10).join(', ')}`);
+      process.exit(1);
+    }
+    console.log(`  ✓ 시크릿 스캔 통과 (환경변수 키 ${secrets.length / 2}개 + 토큰 형태 검사)`);
   }
 
   console.log('\n=== 빌드 완료 ===');

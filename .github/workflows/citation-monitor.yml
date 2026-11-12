@@ -4,8 +4,10 @@
 name: AI Citation Monitor
 
 on:
-  schedule:
-    - cron: '0 1 * * 1'   # 매주 월 KST 10:00 (UTC 01:00)
+  # 주간 자동 실행 중지 (2026-11-12): PERPLEXITY_API_KEY 만료(401) 상태라 매주 실패 이슈만 생김.
+  # 키를 새로 등록하면 아래 두 줄의 주석을 풀어 다시 켠다. 그 전에는 Actions에서 수동 실행만 가능.
+  # schedule:
+  #   - cron: '0 1 * * 1'   # 매주 월 KST 10:00 (UTC 01:00)
   workflow_dispatch:
 
 permissions:
