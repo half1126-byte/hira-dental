@@ -50,3 +50,14 @@ export function checkLawHard(html, filePath) {
   const found = LAW_HARD.filter(w => text.includes(w));
   if (found.length) throw new Error(`🚨 LAW_HARD 위반 [${filePath}]: ${found.join(', ')}`);
 }
+
+// ── 전국 17개 시도 (인구 순) — 수집·페이지·가격지수·OG 이미지가 모두 이 목록을 쓴다 ──
+// 데이터가 없는 시도는 각 생성기에서 건너뛴다(빈 페이지를 만들지 않음).
+export const REGIONS = [
+  { nm: '서울', en: 'seoul' },    { nm: '경기', en: 'gyeonggi' },  { nm: '부산', en: 'busan' },
+  { nm: '경남', en: 'gyeongnam' }, { nm: '인천', en: 'incheon' },   { nm: '경북', en: 'gyeongbuk' },
+  { nm: '대구', en: 'daegu' },    { nm: '충남', en: 'chungnam' },  { nm: '전남', en: 'jeonnam' },
+  { nm: '전북', en: 'jeonbuk' },  { nm: '충북', en: 'chungbuk' },  { nm: '강원', en: 'gangwon' },
+  { nm: '대전', en: 'daejeon' },  { nm: '광주', en: 'gwangju' },   { nm: '울산', en: 'ulsan' },
+  { nm: '제주', en: 'jeju' },     { nm: '세종', en: 'sejong' },
+];

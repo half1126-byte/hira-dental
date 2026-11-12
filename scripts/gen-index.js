@@ -23,13 +23,9 @@ const DATA_DIR = join(ROOT, 'data');
 const OUT_DIR = join(ROOT, 'price-index');
 const SNAP_DIR = join(OUT_DIR, 'data');
 
-import { BASE_URL, SITE_NAME, checkLawHard } from './site-config.js';
+import { BASE_URL, SITE_NAME, checkLawHard, REGIONS } from './site-config.js';
 const INDEX_NAME = '메디픽 임플란트 가격지수';
 
-const REGIONS = [
-  { nm: '서울', en: 'seoul' }, { nm: '경기', en: 'gyeonggi' },
-  { nm: '부산', en: 'busan' }, { nm: '인천', en: 'incheon' },
-];
 
 const fmtWon = n => n == null ? '-' : Math.round(n).toLocaleString('ko-KR') + '원';
 const fmtMan = n => n == null ? '-' : (n / 10000).toFixed(0) + '만원';

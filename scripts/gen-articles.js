@@ -17,8 +17,9 @@ const ROOT = join(__dir, '..');
 const DATA_DIR = join(ROOT, 'data');
 const OUT_DIR = join(ROOT, 'articles');
 
-import { BASE_URL, PROCEDURES, SITE_NAME, checkLawHard, MIN_INDEX_CLINICS } from './site-config.js';
+import { BASE_URL, PROCEDURES, SITE_NAME, checkLawHard, MIN_INDEX_CLINICS, REGIONS } from './site-config.js';
 import { pageDates } from './page-dates.js';
+import { renderPriceChart } from './gen-chart.js';
 
 
 // 거래처(제휴) 인덱스: "기관명|시도" → partner (모듈 로드 시 1회)
@@ -36,12 +37,7 @@ function partnerUrl(yadmNm, sidoNm, addr) {
 }
 
 // 지역 메타 (데이터 파일 + 영문 slug + 한국어 지역명)
-export const REGION_META = [
-  { dataKey: 'seoul',    sido: '서울', sidoEn: 'seoul',    specialty: 'implant' },
-  { dataKey: 'gyeonggi', sido: '경기', sidoEn: 'gyeonggi', specialty: 'implant' },
-  { dataKey: 'busan',    sido: '부산', sidoEn: 'busan',    specialty: 'implant' },
-  { dataKey: 'incheon',  sido: '인천', sidoEn: 'incheon',  specialty: 'implant' },
-];
+export const REGION_META = REGIONS.map(r => ({ dataKey: r.en, sido: r.nm, sidoEn: r.en, specialty: 'implant' }));
 
 // 시군구 영문 slug 변환 (한글 → 로마자 근사)
 const SGGU_SLUG_MAP = {
@@ -81,10 +77,27 @@ const SGGU_SLUG_MAP = {
   '인천검단구': 'incheon-geomdan', '인천서해구': 'incheon-seohae',
 };
 
+// 국어의 로마자 표기법(간이) — 표에 없는 시군구도 고유한 slug를 갖게 한다
+const RR_I = ['g','kk','n','d','tt','r','m','b','pp','s','ss','','j','jj','ch','k','t','p','h'];
+const RR_V = ['a','ae','ya','yae','eo','e','yeo','ye','o','wa','wae','oe','yo','u','wo','we','wi','yu','eu','ui','i'];
+const RR_F = ['','k','k','k','n','n','n','t','l','k','m','l','l','l','p','l','m','p','p','t','t','ng','t','t','k','t','p','t'];
+function romanize(word) {
+  let out = '';
+  for (const ch of word) {
+    const c = ch.codePointAt(0) - 0xAC00;
+    if (c < 0 || c > 11171) { out += /[a-z0-9]/i.test(ch) ? ch.toLowerCase() : ''; continue; }
+    out += RR_I[Math.floor(c / 588)] + RR_V[Math.floor((c % 588) / 28)] + RR_F[c % 28];
+  }
+  return out;
+}
+
 export function toSlug(sgguNm) {
   if (SGGU_SLUG_MAP[sgguNm]) return SGGU_SLUG_MAP[sgguNm];
-  // fallback: 한글 제거, 영문/숫자만 남김
-  return sgguNm.replace(/[가-힣]/g, '').replace(/\s+/g, '-').toLowerCase() || 'unknown';
+  // fallback: 로마자 변환 + 행정단위 접미사 (예: 수성구 → suseong-gu, 창원시의창구 → changwonsi-uichang-gu)
+  const name = String(sgguNm).trim();
+  const m = name.match(/^(.*?)(구|시|군)$/);
+  const slug = m && m[1] ? `${romanize(m[1])}-${m[2] === '구' ? 'gu' : m[2] === '시' ? 'si' : 'gun'}` : romanize(name);
+  return slug.replace(/[^a-z0-9-]+/g, '-').replace(/^-+|-+$/g, '') || 'unknown';
 }
 
 function formatPrice(amt) {
@@ -302,7 +315,7 @@ function buildArticleJsonLd(sgguNm, sidoNm, sidoEn, sgguSlug, clinics, buildDate
 }
 
 /** 아티클 HTML 전체 생성 — proc 파라미터로 시술 분기 */
-function generateArticleHtml(clinics, sgguNm, sidoNm, sidoEn, sgguSlug, buildDate, proc) {
+function generateArticleHtml(clinics, sgguNm, sidoNm, sidoEn, sgguSlug, buildDate, proc, ctx = {}) {
   const stats = computeSgguStats(clinics);
   const dataMonth = buildDate.slice(0, 7); // YYYY-MM
   const hasStats = stats.count >= 3 && stats.mean && stats.median;
@@ -316,6 +329,53 @@ function generateArticleHtml(clinics, sgguNm, sidoNm, sidoEn, sgguSlug, buildDat
   const { breadcrumb, article, url, title } = buildArticleJsonLd(sgguNm, sidoNm, sidoEn, sgguSlug, clinics, buildDate, stats, proc);
   const compareTable = buildCompareTable(clinics, sidoNm);
   const clinicSections = clinics.slice(0, 8).map((c, i) => buildClinicSection(c, i + 1, sidoNm)).join('');
+
+  const indexable = clinics.length >= MIN_INDEX_CLINICS;
+  const monthLabel = `${Number(dataMonth.slice(0, 4))}년 ${Number(dataMonth.slice(5, 7))}월`;
+  const won = n => `${Math.round(n).toLocaleString('ko-KR')}원`;
+
+  // 시도 전체 대비 비교 문장 (같은 시도·같은 시술 치과병원 전체 중앙값 기준)
+  const sidoStats = ctx.sidoStats;
+  let compareSentence = '';
+  if (hasStats && sidoStats?.median && sidoStats.count >= 3) {
+    const diff = Math.round(((stats.median - sidoStats.median) / sidoStats.median) * 100);
+    const rel = Math.abs(diff) < 3 ? '와 비슷한 수준입니다' : `보다 ${Math.abs(diff)}% ${diff > 0 ? '높습니다' : '낮습니다'}`;
+    compareSentence = `${sgguNm} 중앙값은 ${sidoNm} 전체 치과병원 ${proc.label} 중앙값(${won(sidoStats.median)}, ${sidoStats.count}곳)${rel}.`;
+  }
+
+  // 가격 분포 차트 (색인 대상 + 통계 성립 시) — 이미지 검색·OG 카드 겸용
+  let chartPath = null;
+  if (indexable && hasStats) {
+    try {
+      chartPath = renderPriceChart({
+        slug: `${sidoEn}-${sgguSlug}-${proc.slug}`,
+        title: `${sidoNm} ${sgguNm} ${proc.label} 비급여 신고가 분포`,
+        subtitle: `치과병원 ${stats.count}곳 · 중앙값 ${won(stats.median)} · 범위 ${won(stats.min)}~${won(stats.max)}`,
+        values: clinics.map(c => c.curAmt),
+        median: stats.median,
+        source: `출처: 건강보험심사평가원 비급여 진료비 공개 데이터(${monthLabel}) · 가공 메디픽`,
+      });
+    } catch (e) { console.warn(`  ⚠ 차트 생성 실패 (${sgguNm} ${proc.slug}): ${e.message}`); }
+  }
+  const chartAlt = hasStats
+    ? `${sidoNm} ${sgguNm} 치과병원 ${stats.count}곳의 ${proc.label} 비급여 신고가 분포 막대그래프. 중앙값 ${won(stats.median)}, 범위 ${won(stats.min)}~${won(stats.max)}.`
+    : '';
+  const chartHtml = chartPath ? `
+    <figure class="price-chart">
+      <img src="${BASE_URL}${chartPath}" alt="${chartAlt}" width="1200" height="630" loading="lazy" decoding="async">
+      <figcaption>${sidoNm} ${sgguNm} ${proc.label} 신고가 분포 (${monthLabel}, 건강보험심사평가원 공개 데이터 · 기관명 비표시)</figcaption>
+    </figure>` : '';
+  if (chartPath) article.image = { '@type': 'ImageObject', url: `${BASE_URL}${chartPath}`, width: 1200, height: 630, caption: chartAlt };
+  const ogImage = chartPath ? `${BASE_URL}${chartPath}` : `${BASE_URL}/assets/og/${sidoEn}.png`;
+
+  // 같은 시도의 다른 지역(색인 대상) 링크 — 내부 링크로 지역 간 비교 동선 제공
+  const siblings = (ctx.siblings ?? []).filter(x => x.sgguSlug !== sgguSlug).slice(0, 8);
+  const relatedHtml = `
+  <section class="related-regions-section">
+    <h2>${sidoNm} 다른 지역 ${proc.label} 가격</h2>
+    ${siblings.length ? `<ul>${siblings.map(x => `<li><a href="${BASE_URL}/articles/${sidoEn}-${x.sgguSlug}-${proc.slug}/">${sidoNm} ${x.sgguNm} ${proc.label} 가격</a> (치과병원 ${x.count}곳)</li>`).join('')}</ul>` : '<p>같은 시도에 비교할 만한 표본(치과병원 3곳 이상)을 가진 다른 지역이 아직 없습니다.</p>'}
+    <p>${proc.slug === 'implant' ? `<a href="${BASE_URL}/dental/${sidoEn}-implant/">${sidoNm} 전체 임플란트 가격 비교</a> · ` : ''}<a href="${BASE_URL}/articles/">전체 지역 아티클</a> · <a href="${BASE_URL}/price-index/">월간 가격지수</a> · <a href="${BASE_URL}/methodology/">데이터 수집·가공 방법</a></p>
+  </section>`;
 
   // meta description: self-contained 문장
   const metaDesc = `${statSentence}. 신고 기준가, 연락처, 주소 포함.`;
@@ -371,7 +431,7 @@ function generateArticleHtml(clinics, sgguNm, sidoNm, sidoEn, sgguSlug, buildDat
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="robots" content="${clinics.length >= MIN_INDEX_CLINICS ? 'index, follow' : 'noindex, follow'}">
+  <meta name="robots" content="${indexable ? 'index, follow, max-image-preview:large' : 'noindex, follow'}">
   <title>${title}</title>
   <meta name="description" content="${metaDesc}">
   <meta property="og:type" content="article">
@@ -380,11 +440,11 @@ function generateArticleHtml(clinics, sgguNm, sidoNm, sidoEn, sgguSlug, buildDat
   <meta property="og:url" content="${url}">
   <meta property="og:site_name" content="${SITE_NAME}">
   <meta property="og:locale" content="ko_KR">
-  <meta property="og:image" content="${BASE_URL}/assets/og/${sidoEn}.png">
+  <meta property="og:image" content="${ogImage}">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:image" content="${BASE_URL}/assets/og/${sidoEn}.png">
+  <meta name="twitter:image" content="${ogImage}">
   <link rel="canonical" href="${url}">
   <link rel="preconnect" href="https://cdn.jsdelivr.net">
   <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" rel="stylesheet">
@@ -423,7 +483,8 @@ function generateArticleHtml(clinics, sgguNm, sidoNm, sidoEn, sgguSlug, buildDat
   <!-- 핵심 결과 -->
   <section class="key-result-section">
     <h2>핵심 정보 요약</h2>
-    <p>${statSentence}.</p>
+    <p>${statSentence}.${compareSentence ? ` ${compareSentence}` : ''}</p>
+    ${chartHtml}
     ${hasStats ? `
     <div class="stat-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:0.75rem;margin:1rem 0">
       <div class="stat-card" style="background:var(--bg-card,#f8f8fb);border-radius:8px;padding:0.75rem 1rem;text-align:center">
@@ -540,6 +601,7 @@ function generateArticleHtml(clinics, sgguNm, sidoNm, sidoEn, sgguSlug, buildDat
     <h2>${relatedLabel}</h2>
     <a href="${relatedHref}" class="cta-btn">${relatedBtnLabel}</a>
   </section>
+${relatedHtml}
 
 </main>
 
@@ -587,12 +649,12 @@ function groupBySggu(prices) {
 const PROC_IMPLANT = { key: 'implant', label: '임플란트', slug: 'implant', filter: '임플란트', filterDesc: '임플란트' };
 
 /** 아티클 페이지 생성 (단일 지역 × 시군구) */
-export function generateArticlePage(clinics, sgguNm, sidoNm, sidoEn, buildDate, proc = PROC_IMPLANT) {
+export function generateArticlePage(clinics, sgguNm, sidoNm, sidoEn, buildDate, proc = PROC_IMPLANT, ctx = {}) {
   const sgguSlug = toSlug(sgguNm);
   const outDir = join(OUT_DIR, `${sidoEn}-${sgguSlug}-${proc.slug}`);
   mkdirSync(outDir, { recursive: true });
 
-  const html = generateArticleHtml(clinics, sgguNm, sidoNm, sidoEn, sgguSlug, buildDate, proc);
+  const html = generateArticleHtml(clinics, sgguNm, sidoNm, sidoEn, sgguSlug, buildDate, proc, ctx);
   const filePath = join(outDir, 'index.html');
 
   checkLawHard(html, `articles/${sidoEn}-${sgguSlug}-${proc.slug}/index.html`);
@@ -611,11 +673,17 @@ export function generateAllArticlesForSido(dataKey, sidoNm, sidoEn, buildDate, m
 
   const groups = groupBySggu(prices);
   const results = [];
+  // 시도 전체 통계 + 색인 대상 형제 지역 (비교 문장·내부 링크용)
+  const sidoStats = computeSgguStats(prices);
+  const siblings = Object.entries(groups)
+    .filter(([, cs]) => cs.length >= MIN_INDEX_CLINICS)
+    .map(([nm, cs]) => ({ sgguNm: nm, sgguSlug: toSlug(nm), count: cs.length }))
+    .sort((a, b) => b.count - a.count);
 
   for (const [sgguNm, clinics] of Object.entries(groups)) {
     if (clinics.length < minClinics) continue;
     try {
-      const r = generateArticlePage(clinics, sgguNm, sidoNm, sidoEn, buildDate, proc);
+      const r = generateArticlePage(clinics, sgguNm, sidoNm, sidoEn, buildDate, proc, { sidoStats, siblings });
       console.log(`  ✓ articles/${sidoEn}-${r.sgguSlug}-${proc.slug}/ (${r.clinics}개 병원${r.indexable ? '' : ', noindex'})`);
       results.push(r);
     } catch (e) {
@@ -689,7 +757,7 @@ export function generateArticlesIndex(buildDate) {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="robots" content="index, follow">
   <title>시군구별 치과 비급여 가격 아티클 ${totalCount}개 | HIRA 비급여 데이터</title>
-  <meta name="description" content="서울·경기·부산·인천 시군구별 치과 임플란트·지르코니아 보철·스케일링 비급여 가격 아티클. 건강보험심사평가원 공개 데이터 기반.">
+  <meta name="description" content="전국 시군구별 치과 임플란트·지르코니아 보철·스케일링 비급여 가격 아티클. 건강보험심사평가원 공개 데이터 기반.">
   <link rel="canonical" href="${BASE_URL}/articles/">
   <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" rel="stylesheet">
   <link rel="stylesheet" href="${BASE_URL}/style.css">

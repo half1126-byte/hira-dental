@@ -143,3 +143,9 @@
   .article-clinic { padding: 1.2rem 1.25rem; }
   .info-table th { width: 5.5rem; }
 }
+
+/* 가격 분포 차트 (gen-chart.js) */
+.price-chart { margin: 1.25rem 0; }
+.price-chart img { width: 100%; height: auto; border-radius: 8px; border: 1px solid #e2e8f0; }
+.price-chart figcaption { font-size: .8rem; color: #666; margin-top: .4rem; }
+.related-regions-section ul { padding-left: 1.2rem; line-height: 1.9; }

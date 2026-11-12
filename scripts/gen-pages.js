@@ -14,7 +14,7 @@ const DATA   = join(ROOT, 'data');
 const TMPL   = join(ROOT, 'templates');
 const DENTAL = join(ROOT, 'dental');
 
-import { BASE_URL, SITE_NAME, checkLawHard } from './site-config.js';
+import { BASE_URL, SITE_NAME, checkLawHard, REGIONS } from './site-config.js';
 
 
 
@@ -361,20 +361,22 @@ ${body}
 </html>`;
 }
 
-const HUB_REGIONS = [
-  { nm: '서울', en: 'seoul' }, { nm: '경기', en: 'gyeonggi' },
-  { nm: '부산', en: 'busan' }, { nm: '인천', en: 'incheon' },
-];
+const HUB_REGIONS = REGIONS;
 
 /** 지역 데이터 요약 통계 (데이터 없으면 null) */
 function regionStats(en) {
   const f = join(DATA, `${en}-implant.json`);
   if (!existsSync(f)) return null;
   try {
-    const prices = (JSON.parse(readFileSync(f, 'utf8')).prices ?? []).filter(p => Number(p.curAmt) > 0);
+    const raw = JSON.parse(readFileSync(f, 'utf8'));
+    const prices = (raw.prices ?? []).filter(p => Number(p.curAmt) > 0);
     if (!prices.length) return null;
     const amts = prices.map(p => Number(p.curAmt));
+    const sorted = [...amts].sort((a, b) => a - b);
+    const mid = Math.floor(sorted.length / 2);
     return {
+      counts: raw.counts ?? null,
+      median: sorted.length % 2 ? sorted[mid] : Math.round((sorted[mid - 1] + sorted[mid]) / 2),
       count: prices.length,
       avg: Math.round(amts.reduce((a, b) => a + b, 0) / amts.length),
       min: Math.min(...amts),
@@ -385,7 +387,8 @@ function regionStats(en) {
 
 /** /dental/ — 치과 허브 페이지 */
 export function generateDentalHub(buildDate) {
-  const cards = HUB_REGIONS.map(r => {
+  // 데이터가 있는 시도만 카드로 노출 (빈 링크 방지)
+  const cards = HUB_REGIONS.filter(r => regionStats(r.en)).map(r => {
     const s = regionStats(r.en);
     return `
     <a class="region-card" href="${BASE_URL}/dental/${r.en}-implant/">
@@ -396,7 +399,7 @@ export function generateDentalHub(buildDate) {
 
   const html = pageShell({
     title: '지역별 치과 임플란트 가격 비교 | HIRA 비급여 데이터',
-    desc: '건강보험심사평가원 공개 데이터 기반 서울·경기·부산·인천 치과 임플란트 비급여 신고 가격 비교.',
+    desc: '건강보험심사평가원 공개 데이터 기반 전국 17개 시도 치과병원 임플란트 비급여 신고 가격 비교.',
     canonicalPath: '/dental/',
     heroTitle: '지역별 임플란트 가격 비교',
     heroSub: 'HIRA 비급여 신고 데이터',
@@ -505,20 +508,35 @@ export function generateMethodologyPage(buildDate) {
 
 /** /dental/compare/ — 전국 비교 페이지 */
 export function generateComparePage(buildDate) {
-  const rows = HUB_REGIONS.map(r => {
-    const s = regionStats(r.en);
-    return `
+  const withData = HUB_REGIONS.map(r => ({ ...r, s: regionStats(r.en) })).filter(r => r.s);
+  const fmtN = n => (n == null ? '-' : `${Number(n).toLocaleString('ko-KR')}곳`);
+  const rows = withData.map(({ en, nm, s }) => `
     <tr>
-      <td><a href="${BASE_URL}/dental/${r.en}-implant/">${r.nm}</a></td>
-      <td>${s ? s.count + '곳' : '준비 중'}</td>
-      <td class="price-cell">${s ? formatAmt(s.avg) : '-'}</td>
-      <td>${s ? `${formatAmt(s.min)} ~ ${formatAmt(s.max)}` : '-'}</td>
-    </tr>`;
-  }).join('');
+      <td><a href="${BASE_URL}/dental/${en}-implant/">${nm}</a></td>
+      <td>${fmtN(s.counts?.clinic)}</td>
+      <td>${fmtN(s.counts?.hosp)}</td>
+      <td>${s.count}곳</td>
+      <td class="price-cell">${formatAmt(s.median)}</td>
+      <td class="price-cell">${formatAmt(s.avg)}</td>
+      <td>${formatAmt(s.min)} ~ ${formatAmt(s.max)}</td>
+    </tr>`).join('');
+  // 비교 표를 그대로 인용할 수 있게 Dataset으로도 기술
+  const compareLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Dataset',
+    name: '전국 시도별 치과병원 임플란트 비급여 신고가 및 치과 기관 수',
+    description: '건강보험심사평가원 비급여진료비 공개 데이터와 병원정보서비스를 시도 단위로 집계한 표. 가격은 치과병원(종별코드 41) 신고가 기준.',
+    url: `${BASE_URL}/dental/compare/`,
+    dateModified: buildDate,
+    creator: { '@type': 'Organization', name: SITE_NAME, url: `${BASE_URL}/` },
+    isBasedOn: ['https://www.hira.or.kr', 'https://www.data.go.kr'],
+    spatialCoverage: '대한민국',
+    variableMeasured: ['치과의원 수', '치과병원 수', '가격 신고 치과병원 수', '임플란트 신고가 중앙값', '평균', '범위'],
+  };
 
   const html = pageShell({
     title: '전국 치과 임플란트 비급여 가격 비교 (지역별 평균) | HIRA 데이터',
-    desc: '서울·경기·부산·인천 치과병원 임플란트 비급여 신고가의 지역별 평균·범위 비교. 건강보험심사평가원 공개 데이터 기반.',
+    desc: '전국 17개 시도 치과병원 임플란트 비급여 신고가의 중앙값·평균·범위와 시도별 치과의원·치과병원 수. 건강보험심사평가원 공개 데이터 기반.',
     canonicalPath: '/dental/compare/',
     heroTitle: '전국 임플란트 가격 비교',
     heroSub: '지역별 평균 신고가 · HIRA 공개 데이터',
@@ -527,10 +545,11 @@ export function generateComparePage(buildDate) {
   <section class="compare-section">
     <h2>지역별 임플란트 신고가 요약은?</h2>
     <table class="compare-table">
-      <thead><tr><th>지역</th><th>신고 기관 수</th><th>평균 신고가</th><th>신고가 범위</th></tr></thead>
+      <thead><tr><th>지역</th><th>치과의원 수</th><th>치과병원 수</th><th>가격 신고 치과병원</th><th>중앙값</th><th>평균</th><th>범위</th></tr></thead>
       <tbody>${rows}</tbody>
-      <tfoot><tr><td colspan="4" class="tfoot-note">출처: 건강보험심사평가원 비급여진료비 공개 데이터 (치과병원 기준, ${buildDate})</td></tr></tfoot>
+      <tfoot><tr><td colspan="7" class="tfoot-note">출처: 건강보험심사평가원 비급여진료비 공개 데이터(가격, 치과병원 기준)·병원정보서비스(기관 수), ${buildDate} 수집. 치과의원은 가격 공개 API에 포함되지 않아 가격 통계는 치과병원 표본입니다.</td></tr></tfoot>
     </table>
+    <script type="application/ld+json">${JSON.stringify(compareLd)}</script>
     <div class="notice-box" style="margin-top:1rem">
       <div class="notice-icon">ℹ</div>
       <div class="notice-text">평균은 지역 내 신고 기관들의 단순 평균이며, 실제 진료비는 뼈이식·상부구조물 등에 따라 달라질 수 있습니다. 지역명을 클릭하면 기관별 상세 가격을 볼 수 있습니다.</div>

@@ -7,7 +7,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { fetchImplantPrices, fetchDentalHospList, fetchNationwideStats, fetchNonPayItems, dedupeAndSort, PROCEDURES, SIDO } from './fetch-hira.js';
+import { fetchImplantPrices, fetchDentalHospList, fetchNationwideStats, fetchNonPayItems, fetchDentalCounts, dedupeAndSort, PROCEDURES, SIDO } from './fetch-hira.js';
 import { generateRegionPage, generateSitemap, generateDentalHub, generateComparePage, generateMethodologyPage } from './gen-pages.js';
 import { generateAllArticlesForSido, generateArticlesIndex, REGION_META } from './gen-articles.js';
 import { generateAllPartnerPages } from './gen-partners.js';
@@ -18,7 +18,7 @@ import { generateLlmsTxt } from './gen-llms.js';
 import { generatePriceIndex } from './gen-index.js';
 import { generateOgImages } from './gen-og.js';
 import { getPageDates, savePageDates } from './page-dates.js';
-import { BASE_URL, MIN_INDEX_CLINICS } from './site-config.js';
+import { BASE_URL, MIN_INDEX_CLINICS, REGIONS } from './site-config.js';
 import { writeFileSync, mkdirSync } from 'node:fs';
 
 const __dir = dirname(fileURLToPath(import.meta.url));
@@ -28,13 +28,7 @@ const DATA = join(ROOT, 'data');
 // KST 기준 날짜 (CI는 UTC로 돌므로 +9h 보정 — 새벽 1시 빌드 시 '어제' 표기 방지)
 const BUILD_DATE = new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(0, 10);
 
-// 생성할 지역 목록 (한국어명, 영문 slug)
-const REGIONS = [
-  { nm: '서울', en: 'seoul' },
-  { nm: '경기', en: 'gyeonggi' },
-  { nm: '부산', en: 'busan' },
-  { nm: '인천', en: 'incheon' },
-];
+// 생성할 지역 목록: site-config.js의 REGIONS (전국 17개 시도)
 
 async function fetchAndSave(nm, en) {
   mkdirSync(DATA, { recursive: true });
@@ -42,10 +36,13 @@ async function fetchAndSave(nm, en) {
   console.log(`\n[${nm}] 데이터 수집 중...`);
 
   // 전체 항목 1회 조회 + 병원 목록 병렬
-  const [allItems, hospList] = await Promise.all([
-    fetchNonPayItems(nm, '41', []),
+  // 전국 확장: 큰 시도는 치과병원 비급여 항목이 2,000행을 넘을 수 있어 상한을 넉넉히 둔다
+  const [allItems, hospList, counts] = await Promise.all([
+    fetchNonPayItems(nm, '41', [], 8000),
     fetchDentalHospList(nm),
+    fetchDentalCounts(nm).catch(() => null),
   ]);
+  console.log(`  ✓ ${nm} 치과병원 비급여 항목 ${allItems.length}행 수집`);
 
   const fetchedAt = new Date().toISOString();
 
@@ -57,7 +54,7 @@ async function fetchAndSave(nm, en) {
     const prices = dedupeAndSort(filtered);
 
     const payload = proc.slug === 'implant'
-      ? { sido: nm, fetchedAt, prices, hospList }  // 기존 스키마 완전 유지
+      ? { sido: nm, fetchedAt, prices, hospList, counts }  // 기존 스키마 + 시도 치과 수
       : { sido: nm, fetchedAt, prices };
 
     const outFile = join(DATA, `${en}-${proc.slug}.json`);
@@ -103,6 +100,9 @@ async function main() {
 
   for (const r of dataFiles) {
     if (!existsSync(r.dataFile)) continue;
+    // 가격 신고 치과병원이 0곳인 시도는 빈 페이지를 만들지 않는다
+    const nPrices = (JSON.parse(readFileSync(r.dataFile, 'utf8')).prices ?? []).length;
+    if (!nPrices) { console.log(`  · ${r.nm}: 가격 신고 치과병원 0곳 — 지역 페이지 생략`); continue; }
     try {
       generateRegionPage(r.dataFile, r.nm, r.en, BUILD_DATE);
       generatedPages.push({
@@ -114,6 +114,24 @@ async function main() {
       console.error(`  ✗ ${r.nm} 페이지 생성 실패: ${e.message}`);
       process.exit(1); // LAW_HARD 위반 시 빌드 중단
     }
+  }
+
+  // 2.4 홈 지역 카드: 실제 생성된 지역 페이지만 노출
+  try {
+    const home = readFileSync(join(ROOT, 'index.html'), 'utf8');
+    const cards = generatedPages.map(p => {
+      const r = REGIONS.find(x => p.path === `/dental/${x.en}-implant/`);
+      return `        <a href="/dental/${r.en}-implant/" class="region-card">
+          <div class="region-name">${r.nm}</div>
+          <div class="region-sub">${r.en[0].toUpperCase()}${r.en.slice(1)}</div>
+          <div class="region-badge">데이터 공개 중</div>
+        </a>`;
+    }).join('\n');
+    const next = home.replace(/(<!-- REGION_GRID_START[^>]*-->\n)[\s\S]*?(<!-- REGION_GRID_END -->)/, `$1${cards}\n$2`);
+    if (generatedPages.length && next !== home) writeFileSync(join(ROOT, 'index.html'), next);
+    console.log(`  ✓ index.html 지역 카드 ${generatedPages.length}개`);
+  } catch (e) {
+    console.warn(`  ⚠ 홈 지역 카드 갱신 실패(계속 진행): ${e.message}`);
   }
 
   // 2.5 치과 허브 + 전국 비교 페이지 + 방법론 페이지
@@ -242,6 +260,19 @@ async function main() {
     ],
     BUILD_DATE,
   );
+
+  // 4.5 IndexNow 제출 목록: 아티클은 오늘 데이터가 바뀐 것만, 나머지(허브·지역·프로필 등)는 전부.
+  //     매일 전체 URL을 재통지하지 않아 검색엔진에 '변경 없는 재제출' 신호를 덜 보낸다.
+  const allPaths = [
+    '/', '/dental/', '/methodology/', '/dental/compare/', '/articles/',
+    ...generatedPages, ...articlePages, ...partnerPages, ...findPages, ...localPages, ...indexPages,
+  ].map(p => (typeof p === 'string' ? p : p.path));
+  const changed = allPaths.filter(path => {
+    if (!path.startsWith('/articles/') || path === '/articles/') return true;
+    return getPageDates(`${BASE_URL}${path}`)?.modified === BUILD_DATE;
+  });
+  writeFileSync(join(ROOT, 'indexnow-urls.txt'), changed.map(p => `${BASE_URL}${p}`).join('\n') + '\n');
+  console.log(`  ✓ indexnow-urls.txt (${changed.length}/${allPaths.length}개 URL — 변경 없는 아티클 제외)`);
 
   // 5. 시크릿 스캔 (빌드 결과물 대상)
   console.log('\n── 5단계: 시크릿·광고법 스캔 ──');

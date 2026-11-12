@@ -5,3 +5,7 @@ node_modules/
 *.log
 .bkit/
 .omc/
+
+# 빌드 때 생성되는 아티클 차트 (CI가 매일 재생성)
+/assets/charts/
+/indexnow-urls.txt
