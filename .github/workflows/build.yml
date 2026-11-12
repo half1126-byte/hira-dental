@@ -55,7 +55,7 @@ jobs:
       - name: Prepare Pages output (_site)
         run: |
           mkdir -p _site
-          cp -r dental articles clinics find local price-index admin methodology assets index.html style.css article.css robots.txt llms.txt sitemap.xml 01641d0d88be2025b555e6f89832ade7.txt CNAME google3af8fc82b6aafb48.html naverd26696efe8be7eb349287c5c94270e80.html _site/
+          cp -r dental articles clinics find local price-index methodology assets index.html style.css article.css robots.txt llms.txt sitemap.xml 01641d0d88be2025b555e6f89832ade7.txt CNAME google3af8fc82b6aafb48.html naverd26696efe8be7eb349287c5c94270e80.html _site/
 
       - name: IndexNow 변경 URL 목록 전달
         uses: actions/upload-artifact@v4
