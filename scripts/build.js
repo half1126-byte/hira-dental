@@ -141,7 +141,7 @@ async function main() {
     const nPrices = (JSON.parse(readFileSync(r.dataFile, 'utf8')).prices ?? []).length;
     if (!nPrices) { console.log(`  · ${r.nm}: 가격 신고 치과병원 0곳 — 지역 페이지 생략`); continue; }
     try {
-      generateRegionPage(r.dataFile, r.nm, r.en, BUILD_DATE);
+      generateRegionPage(r.dataFile, r.label ?? r.nm, r.en, BUILD_DATE);
       generatedPages.push({
         path: `/dental/${r.en}-implant/`,
         priority: '0.9',
@@ -159,7 +159,7 @@ async function main() {
     const cards = generatedPages.map(p => {
       const r = REGIONS.find(x => p.path === `/dental/${x.en}-implant/`);
       return `        <a href="/dental/${r.en}-implant/" class="region-card">
-          <div class="region-name">${r.nm}</div>
+          <div class="region-name">${r.label ?? r.nm}</div>
           <div class="region-sub">${r.en[0].toUpperCase()}${r.en.slice(1)}</div>
           <div class="region-badge">데이터 공개 중</div>
         </a>`;

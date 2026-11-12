@@ -19,7 +19,7 @@ import { Resvg } from '@resvg/resvg-js';
 import { writeFileSync, readFileSync, mkdirSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { REGIONS } from './site-config.js';
+import { REGIONS, REGIONS_DISPLAY } from './site-config.js';
 
 const __dir = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dir, '..');
@@ -183,7 +183,7 @@ export async function generateOgImages({ force = false } = {}) {
   }
 
   // 지역별 카드
-  const SIDOS = REGIONS.map(r => ({ en: r.en, kr: r.nm }));
+  const SIDOS = REGIONS_DISPLAY.map(r => ({ en: r.en, kr: r.nm }));
 
   for (const s of SIDOS) {
     const out = join(OG_DIR, `${s.en}.png`);

@@ -14,7 +14,7 @@
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { BASE_URL, SITE_NAME, REGIONS, checkLawHard } from './site-config.js';
+import { BASE_URL, SITE_NAME, REGIONS_DISPLAY as REGIONS, checkLawHard, sgguLabel } from './site-config.js';
 import { toSlug } from './gen-articles.js';
 import { pageDates } from './page-dates.js';
 
@@ -113,7 +113,9 @@ function breadcrumbLd(items) {
 function districtPage(r, sggu, slug, items, fetchedAt, priceArticle, buildDate) {
   const s = summarize(items, fetchedAt);
   const path = `/dental/${r.en}/${slug}/`;
-  const where = `${r.nm} ${sggu}`;
+  // '광주 북구'처럼 도시명이 앞에 붙은 구는 그 자체로, 나머지는 '시도 시군구'로 표기
+  const shown = sgguLabel(sggu);
+  const where = shown.includes(' ') ? shown : `${r.nm} ${shown}`;
   const asOf = kDate(fetchedAt);
   const indexable = s.total >= MIN_DISTRICT_INSTITUTIONS;
   const top3 = s.topDongs.slice(0, 3).map(([d, c]) => `${d}(${c}곳)`).join(', ');
@@ -193,7 +195,7 @@ function districtPage(r, sggu, slug, items, fetchedAt, priceArticle, buildDate) 
   const title = `${where} 치과 현황: 치과의원 ${n(s.clinic)}곳·치과병원 ${n(s.hosp)}곳 (${asOf.replace(/ \d+일$/, '')} 공공데이터)`;
   const desc = answer.slice(0, 155);
   const jsonLd = [
-    breadcrumbLd([['홈', '/'], ['치과', '/dental/'], [`${r.nm} 치과 현황`, `/dental/${r.en}/`], [`${sggu} 치과 현황`, path]]),
+    breadcrumbLd([['홈', '/'], ['치과', '/dental/'], [`${r.nm} 치과 현황`, `/dental/${r.en}/`], [`${shown} 치과 현황`, path]]),
     {
       '@context': 'https://schema.org', '@type': 'Dataset',
       name: `${where} 치과 기관 현황`,
@@ -216,7 +218,7 @@ function districtPage(r, sggu, slug, items, fetchedAt, priceArticle, buildDate) 
     robots: indexable ? 'index, follow' : 'noindex, follow',
     h1: `${where} 치과 현황`,
     sub: `건강보험심사평가원 병원정보서비스 · ${asOf} 수집 · 치과 ${n(s.total)}곳`,
-    crumbs: [['홈', '/'], ['치과', '/dental/'], [`${r.nm}`, `/dental/${r.en}/`], [sggu, null]],
+    crumbs: [['홈', '/'], ['치과', '/dental/'], [`${r.nm}`, `/dental/${r.en}/`], [shown, null]],
     body, jsonLd,
   });
   // 우리가 쓴 문장만 금지어 검사 (기관명·주소는 실제 상호라 제외)
@@ -235,7 +237,7 @@ function sidoHub(r, districts, fetchedAt) {
   const asOf = kDate(fetchedAt);
   const tot = districts.reduce((a, d) => ({ clinic: a.clinic + d.s.clinic, hosp: a.hosp + d.s.hosp }), { clinic: 0, hosp: 0 });
   const rows = [...districts].sort((a, b) => a.sggu.localeCompare(b.sggu, 'ko')).map(d =>
-    `<tr><td><a href="${BASE_URL}${d.path}">${esc(d.sggu)}</a></td><td>${n(d.s.clinic)}곳</td><td>${n(d.s.hosp)}곳</td><td>${d.s.dentists != null ? `${n(d.s.dentists)}명` : '-'}</td></tr>`).join('');
+    `<tr><td><a href="${BASE_URL}${d.path}">${esc(sgguLabel(d.sggu))}</a></td><td>${n(d.s.clinic)}곳</td><td>${n(d.s.hosp)}곳</td><td>${d.s.dentists != null ? `${n(d.s.dentists)}명` : '-'}</td></tr>`).join('');
   const answer = `건강보험심사평가원 병원정보서비스 기준(${asOf} 수집), ${r.nm}에는 치과의원 ${n(tot.clinic)}곳과 치과병원 ${n(tot.hosp)}곳이 ${districts.length}개 시군구에 있습니다.`;
   const page = shell({
     title: `${r.nm} 시군구별 치과 현황 (치과의원 ${n(tot.clinic)}곳·치과병원 ${n(tot.hosp)}곳)`,

@@ -53,11 +53,23 @@ export function checkLawHard(html, filePath) {
 
 // ── 전국 17개 시도 (인구 순) — 수집·페이지·가격지수·OG 이미지가 모두 이 목록을 쓴다 ──
 // 데이터가 없는 시도는 각 생성기에서 건너뛴다(빈 페이지를 만들지 않음).
+// nm = HIRA API 조회 키(fetch-hira.js의 SIDO), label = 화면 표기(없으면 nm)
+//
+// 광주: 2026-11 심평원 데이터에서 광주 기관이 전남 코드 아래 '전남광주통합특별시' 주소로 관리됨
+//       (광주 코드 조회는 0건). 별도 항목을 두지 않고 전남을 '광주·전남'으로 표기한다.
 export const REGIONS = [
   { nm: '서울', en: 'seoul' },    { nm: '경기', en: 'gyeonggi' },  { nm: '부산', en: 'busan' },
   { nm: '경남', en: 'gyeongnam' }, { nm: '인천', en: 'incheon' },   { nm: '경북', en: 'gyeongbuk' },
-  { nm: '대구', en: 'daegu' },    { nm: '충남', en: 'chungnam' },  { nm: '전남', en: 'jeonnam' },
+  { nm: '대구', en: 'daegu' },    { nm: '충남', en: 'chungnam' },  { nm: '전남', en: 'jeonnam', label: '광주·전남' },
   { nm: '전북', en: 'jeonbuk' },  { nm: '충북', en: 'chungbuk' },  { nm: '강원', en: 'gangwon' },
-  { nm: '대전', en: 'daejeon' },  { nm: '광주', en: 'gwangju' },   { nm: '울산', en: 'ulsan' },
+  { nm: '대전', en: 'daejeon' },  { nm: '울산', en: 'ulsan' },
   { nm: '제주', en: 'jeju' },     { nm: '세종', en: 'sejong' },
 ];
+
+// 화면용 목록: nm을 표기 이름으로 바꾼 사본 (API를 부르지 않는 생성기에서 사용)
+export const REGIONS_DISPLAY = REGIONS.map(r => ({ ...r, apiNm: r.nm, nm: r.label ?? r.nm }));
+
+/** 시군구 표기: HIRA의 '광주북구'·'부산북구' 같은 붙여쓴 이름을 '광주 북구'로 */
+export function sgguLabel(sggu) {
+  return String(sggu).replace(/^(서울|부산|대구|인천|광주|대전|울산)(?=[가-힣]+[구군]$)/, '$1 ');
+}
