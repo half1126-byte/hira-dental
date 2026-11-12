@@ -23,7 +23,7 @@ const DATA_DIR = join(ROOT, 'data');
 const OUT_DIR = join(ROOT, 'price-index');
 const SNAP_DIR = join(OUT_DIR, 'data');
 
-import { BASE_URL, SITE_NAME, checkLawHard, REGIONS } from './site-config.js';
+import { BASE_URL, SITE_NAME, checkLawHard, REGIONS_DISPLAY } from './site-config.js';
 const INDEX_NAME = '메디픽 임플란트 가격지수';
 
 
@@ -41,7 +41,7 @@ function computeStats() {
   if (!existsSync(DATA_DIR)) return null;
   const computedAt = new Date().toISOString();
   const regions = [];
-  for (const r of REGIONS) {
+  for (const r of REGIONS_DISPLAY) {
     const f = join(DATA_DIR, `${r.en}-implant.json`);
     if (!existsSync(f)) continue;
     try {

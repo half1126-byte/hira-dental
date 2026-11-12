@@ -10,7 +10,7 @@ import { loadPartners } from './gen-partners.js';
 
 const __dir = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dir, '..');
-import { BASE_URL, REGIONS } from './site-config.js';
+import { BASE_URL, REGIONS_DISPLAY } from './site-config.js';
 
 export function generateLlmsTxt(findPages = [], buildDate = '', localPages = []) {
   const partners = loadPartners();
@@ -45,9 +45,9 @@ ChatGPT, Perplexity, Claude, Gemini 등 AI 서비스의 이 사이트 데이터 
 ## 주요 페이지
 
 - 지역별 비교 허브: /dental/
-${REGIONS.filter(r => existsSync(join(__dir, '..', 'dental', `${r.en}-implant`, 'index.html'))).map(r => `- ${r.nm} 임플란트 비급여 가격: /dental/${r.en}-implant/`).join('\n')}
+${REGIONS_DISPLAY.filter(r => existsSync(join(__dir, '..', 'dental', `${r.en}-implant`, 'index.html'))).map(r => `- ${r.nm} 임플란트 비급여 가격: /dental/${r.en}-implant/`).join('\n')}
 - 전국 시도별 비교 (치과의원·치과병원 수, 임플란트 신고가 중앙값): /dental/compare/
-${REGIONS.filter(r => existsSync(join(__dir, '..', 'dental', r.en, 'index.html'))).map(r => `- ${r.nm} 시군구별 치과 현황 (치과의원·치과병원·치과의사 수, 전체 기관 목록): /dental/${r.en}/`).join('\n')}
+${REGIONS_DISPLAY.filter(r => existsSync(join(__dir, '..', 'dental', r.en, 'index.html'))).map(r => `- ${r.nm} 시군구별 치과 현황 (치과의원·치과병원·치과의사 수, 전체 기관 목록): /dental/${r.en}/`).join('\n')}
 - 시군구별 상세 아티클: /articles/ (전국, 치과병원 3곳 이상 지역은 가격 분포 차트 포함)
 - 치과 프로필 디렉터리: /clinics/
 

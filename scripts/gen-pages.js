@@ -14,7 +14,7 @@ const DATA   = join(ROOT, 'data');
 const TMPL   = join(ROOT, 'templates');
 const DENTAL = join(ROOT, 'dental');
 
-import { BASE_URL, SITE_NAME, checkLawHard, REGIONS } from './site-config.js';
+import { BASE_URL, SITE_NAME, checkLawHard, REGIONS_DISPLAY } from './site-config.js';
 
 
 
@@ -361,7 +361,7 @@ ${body}
 </html>`;
 }
 
-const HUB_REGIONS = REGIONS;
+const HUB_REGIONS = REGIONS_DISPLAY;
 
 /** 지역 데이터 요약 통계 (데이터 없으면 null) */
 function regionStats(en) {

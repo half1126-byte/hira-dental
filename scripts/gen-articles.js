@@ -17,7 +17,7 @@ const ROOT = join(__dir, '..');
 const DATA_DIR = join(ROOT, 'data');
 const OUT_DIR = join(ROOT, 'articles');
 
-import { BASE_URL, PROCEDURES, SITE_NAME, checkLawHard, MIN_INDEX_CLINICS, REGIONS } from './site-config.js';
+import { BASE_URL, PROCEDURES, SITE_NAME, checkLawHard, MIN_INDEX_CLINICS, REGIONS, REGIONS_DISPLAY } from './site-config.js';
 import { pageDates } from './page-dates.js';
 import { renderPriceChart } from './gen-chart.js';
 
@@ -37,7 +37,7 @@ function partnerUrl(yadmNm, sidoNm, addr) {
 }
 
 // 지역 메타 (데이터 파일 + 영문 slug + 한국어 지역명)
-export const REGION_META = REGIONS.map(r => ({ dataKey: r.en, sido: r.nm, sidoEn: r.en, specialty: 'implant' }));
+export const REGION_META = REGIONS_DISPLAY.map(r => ({ dataKey: r.en, sido: r.nm, sidoEn: r.en, specialty: 'implant' }));
 
 // 시군구 영문 slug 변환 (한글 → 로마자 근사)
 const SGGU_SLUG_MAP = {
