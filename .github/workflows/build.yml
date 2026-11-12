@@ -44,7 +44,7 @@ jobs:
           git config user.email "actions@github.com"
           # 원격 변경을 먼저 반영한 뒤 커밋 (commit→rebase 순서는 원격 변경 시 실패 가능)
           git pull --rebase --autostash origin main
-          git add price-index/data/ price-index/index.html price-index/20* press/ meta/page-dates.json 2>/dev/null || true
+          git add price-index/data/ price-index/index.html price-index/20* press/ meta/page-dates.json meta/institutions/ 2>/dev/null || true
           if git diff --cached --quiet; then
             echo "스냅샷 변경 없음"
           else

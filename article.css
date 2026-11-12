@@ -149,3 +149,12 @@
 .price-chart img { width: 100%; height: auto; border-radius: 8px; border: 1px solid #e2e8f0; }
 .price-chart figcaption { font-size: .8rem; color: #666; margin-top: .4rem; }
 .related-regions-section ul { padding-left: 1.2rem; line-height: 1.9; }
+
+/* 시군구 치과 현황 (gen-district.js) */
+.district-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: .75rem; margin: 1rem 0; }
+.stat-card { background: var(--bg-card, #f8f8fb); border-radius: 8px; padding: .75rem 1rem; text-align: center; }
+.stat-label { font-size: .75rem; color: #666; }
+.stat-value { font-weight: 700; font-size: 1.05rem; }
+.table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.district-list td, .district-list th { white-space: nowrap; font-size: .85rem; }
+.district-list td:nth-child(4) { white-space: normal; min-width: 14rem; }
