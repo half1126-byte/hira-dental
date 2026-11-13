@@ -16,7 +16,7 @@ export const BASE_URL = 'https://xn--2z1bo3hsx1a.com';
 // 키 없이 실행되는 gen-articles.js 단독 실행 경로를 위해 중립 모듈에 둔다
 export const PROCEDURES = {
   implant: { label: '임플란트',              slug: 'implant', filter: '임플란트' },
-  crown:   { label: '지르코니아 보철',        slug: 'crown',   filter: '크라운/Zirconia' },
+  crown:   { label: '크라운(지르코니아)',     slug: 'crown',   filter: '크라운/Zirconia' },
   scaling: { label: '스케일링(치석제거)',     slug: 'scaling', filter: '치석제거/전악' },
 };
 
