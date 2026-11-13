@@ -33,7 +33,7 @@ function buildQueries() {
     { q: '분당 임플란트 가격 얼마', target: '지역 아티클', type: 'A 가격' },
     { q: '부산진구 임플란트 비용', target: '지역 아티클', type: 'A 가격' },
     { q: '인천 부평구 임플란트 가격', target: '지역 아티클', type: 'A 가격' },
-    { q: '서울 지르코니아 보철 비급여 가격', target: '지역 아티클', type: 'A 가격' },
+    { q: '서울 크라운 비급여 가격', target: '지역 아티클', type: 'A 가격' },
     { q: '치과 임플란트 가격 지수 2026', target: '가격지수', type: 'A 가격' },
   ];
   const pf = join(ROOT, 'partners', 'partners.json');

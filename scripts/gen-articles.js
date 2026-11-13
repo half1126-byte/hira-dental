@@ -194,7 +194,7 @@ function buildFaq(sgguNm, sidoNm, stats, dataMonth, proc) {
   const location = `${sidoNm} ${sgguNm}`;
   const hasStats = stats && stats.count >= 3 && stats.mean && stats.median;
 
-  // 신고가≠실청구가 공통 답변 (임플란트·지르코니아 보철·스케일링 공유)
+  // 신고가≠실청구가 공통 답변 (임플란트·크라운·스케일링 공유)
   const implantSignedVsActual = 'HIRA에 신고된 비급여 가격은 의료기관이 제출한 기준 가격이며, 뼈이식 여부·상부구조물 종류·임시치아 등 추가 항목에 따라 실제 총 진료비가 달라질 수 있습니다. 상담 시 전체 항목별 비용을 사전에 안내받는 것이 중요합니다.';
   const signedVsActualScaling = 'HIRA에 신고된 비급여 가격은 의료기관이 제출한 기준 가격이며, 실제 청구금액은 추가 처치 여부·장비 사용 등에 따라 달라질 수 있습니다. 상담 시 전체 항목별 비용을 사전에 안내받는 것이 중요합니다.';
 
@@ -215,13 +215,13 @@ function buildFaq(sgguNm, sidoNm, stats, dataMonth, proc) {
     ];
   } else if (proc.slug === 'crown') {
     const faq1a = hasStats
-      ? `HIRA ${dataMonth} 신고 데이터 기준, ${location} 지르코니아 보철 평균 ${stats.mean.toLocaleString('ko-KR')}원(중앙값 ${stats.median.toLocaleString('ko-KR')}원, 범위 ${stats.min.toLocaleString('ko-KR')}~${stats.max.toLocaleString('ko-KR')}원, 표본 ${stats.count}개 기관). 이 페이지에서 HIRA 공개 데이터를 기준으로 실제 신고 가격을 확인하실 수 있습니다. 반드시 방문 전 해당 의료기관에 직접 확인하시길 권장합니다.`
-      : `건강보험심사평가원에 신고된 ${location} 치과병원의 지르코니아 보철 비급여 가격은 표본 ${stats ? stats.count : 0}개 기관 신고가 기준으로 공개되어 있습니다. 이 페이지에서 HIRA 공개 데이터를 기준으로 실제 신고 가격을 확인하실 수 있습니다. 반드시 방문 전 해당 의료기관에 직접 확인하시길 권장합니다.`;
+      ? `HIRA ${dataMonth} 신고 데이터 기준, ${location} 크라운(지르코니아) 평균 ${stats.mean.toLocaleString('ko-KR')}원(중앙값 ${stats.median.toLocaleString('ko-KR')}원, 범위 ${stats.min.toLocaleString('ko-KR')}~${stats.max.toLocaleString('ko-KR')}원, 표본 ${stats.count}개 기관). 이 페이지에서 HIRA 공개 데이터를 기준으로 실제 신고 가격을 확인하실 수 있습니다. 반드시 방문 전 해당 의료기관에 직접 확인하시길 권장합니다.`
+      : `건강보험심사평가원에 신고된 ${location} 치과병원의 크라운(지르코니아) 비급여 가격은 표본 ${stats ? stats.count : 0}개 기관 신고가 기준으로 공개되어 있습니다. 이 페이지에서 HIRA 공개 데이터를 기준으로 실제 신고 가격을 확인하실 수 있습니다. 반드시 방문 전 해당 의료기관에 직접 확인하시길 권장합니다.`;
     faqs = [
-      { q: `${location} 지르코니아 보철 비급여 가격은 어느 정도인가요?`, a: faq1a },
-      { q: '보철물은 재질에 따라 가격이 다른가요?', a: '지르코니아·금(Gold)·PFM 등 재질에 따라 신고 가격이 다릅니다. 이 페이지의 통계는 HIRA 항목 "크라운/Zirconia"(지르코니아 보철) 신고가 기준입니다. 재질별 비용은 의료기관에 직접 확인하시기 바랍니다.' },
-      { q: '지르코니아 보철 치료에 건강보험이 적용되나요?', a: '보철 치료는 대부분 비급여 항목으로, 의료기관이 신고한 금액 기준으로 비용이 결정됩니다. 급여 적용 여부는 치아 상태와 치료 목적에 따라 다를 수 있으므로 의료기관에 확인하시기 바랍니다.' },
-      { q: '지르코니아 보철 비급여 신고 가격과 실제 진료비는 다를 수 있나요?', a: implantSignedVsActual },
+      { q: `${location} 크라운 비급여 가격은 어느 정도인가요?`, a: faq1a },
+      { q: '크라운은 재질에 따라 가격이 다른가요?', a: '지르코니아·금(Gold)·PFM 등 재질에 따라 신고 가격이 다릅니다. 이 페이지의 통계는 지르코니아 크라운 신고가 기준입니다. 재질별 비용은 의료기관에 직접 확인하시기 바랍니다.' },
+      { q: '크라운 치료에 건강보험이 적용되나요?', a: '크라운(보철)은 대부분 비급여 항목으로, 의료기관이 신고한 금액 기준으로 비용이 결정됩니다. 급여 적용 여부는 치아 상태와 치료 목적에 따라 다를 수 있으므로 의료기관에 확인하시기 바랍니다.' },
+      { q: '크라운 비급여 신고 가격과 실제 진료비는 다를 수 있나요?', a: implantSignedVsActual },
     ];
   } else {
     // scaling
@@ -757,7 +757,7 @@ export function generateArticlesIndex(buildDate) {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="robots" content="index, follow">
   <title>시군구별 치과 비급여 가격 아티클 ${totalCount}개 | HIRA 비급여 데이터</title>
-  <meta name="description" content="전국 시군구별 치과 임플란트·지르코니아 보철·스케일링 비급여 가격 아티클. 건강보험심사평가원 공개 데이터 기반.">
+  <meta name="description" content="전국 시군구별 치과 임플란트·크라운·스케일링 비급여 가격 아티클. 건강보험심사평가원 공개 데이터 기반.">
   <link rel="canonical" href="${BASE_URL}/articles/">
   <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" rel="stylesheet">
   <link rel="stylesheet" href="${BASE_URL}/style.css">
@@ -776,7 +776,7 @@ export function generateArticlesIndex(buildDate) {
 <section class="article-hero">
   <div class="inner">
     <h1>시군구별 치과 비급여 가격 아티클</h1>
-    <p class="article-sub">${totalCount}개 아티클 · ${buildDate} 기준 · HIRA 공개 데이터 · 임플란트·지르코니아 보철·스케일링</p>
+    <p class="article-sub">${totalCount}개 아티클 · ${buildDate} 기준 · HIRA 공개 데이터 · 임플란트·크라운·스케일링</p>
   </div>
 </section>
 <main class="inner article-body">
